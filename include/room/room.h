@@ -31,6 +31,14 @@ public:
     State state() const { return state_; }
     void setState(State state) { state_ = state; }
     
+    // 状态转换方法
+    bool startChoosing();  // 开始选将
+    bool startGame();      // 开始游戏
+    bool endGame();        // 结束游戏
+    
+    // 房间信息
+    uint32_t playerCount() const { return players_.size(); }
+
 private:
     uint32_t id_;
     std::vector<uint32_t> players_;
