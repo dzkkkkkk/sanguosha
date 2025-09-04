@@ -13,12 +13,14 @@ public:
     Server();
     void start(unsigned short port);
     
+    // 添加获取io_context的方法
+    boost::asio::io_context& getIoContext() { return io_context_; }
+    
 private:
     void do_accept();
     
     boost::asio::io_context io_context_;
     boost::asio::ip::tcp::acceptor acceptor_;
-
     std::set<std::shared_ptr<Session>> sessions_;
 };
 

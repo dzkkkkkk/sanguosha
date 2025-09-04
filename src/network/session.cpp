@@ -1,6 +1,9 @@
 #include "network/session.h"
 #include "network/message_codec.h"
 #include <iostream>
+#include "room/room_manager.h"
+#include "game/game_manager.h"
+#include "room/room.h"
 
 using boost::asio::ip::tcp;
 using boost::asio::steady_timer;
@@ -105,6 +108,9 @@ void Session::handleLogin(const sanguosha::LoginRequest& login) {
     if (login.username() == "test" && login.password() == "123") {
         login_res->set_success(true);
         login_res->set_user_id(1001); // 模拟用户ID
+        
+        // 设置玩家ID
+        playerId_ = 1001;
     } else {
         login_res->set_success(false);
         login_res->set_error_message("Invalid username or password");
@@ -138,26 +144,26 @@ void Session::handleRoomRequest(const sanguosha::RoomRequest& request) {
             bool success = roomMgr.joinRoom(request.room_id(), playerId_);
             room_res->set_success(success);
             if (success) {
-                room_res->mutable_room_info()->set_room_id(request.room_id());
+                auto room = roomMgr.getRoom(request.room_id());
+                if (room && room->playerCount() >= 2) {
+                    // 暂时注释掉选将逻辑
+                    // room->startChoosing(); 
+                }
             } else {
                 room_res->set_error_message("Join room failed");
             }
             break;
         }
-        // 其他操作类似
+        case sanguosha::START_GAME: {
+            room_res->set_success(false);
+            room_res->set_error_message("Start game is temporarily disabled");
+            break;
+        }
         case sanguosha::LEAVE_ROOM: {
             bool success = roomMgr.leaveRoom(request.room_id(), playerId_);
             room_res->set_success(success);
             if (!success) {
                 room_res->set_error_message("Leave room failed");
-            }
-            break;
-        }
-        case sanguosha::START_GAME: {
-            bool success = roomMgr.startGame(request.room_id());
-            room_res->set_success(success);
-            if (!success) {
-                room_res->set_error_message("Start game failed");
             }
             break;
         }

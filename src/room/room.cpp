@@ -1,7 +1,10 @@
 #include "room/room.h"
+#include <algorithm>  // 添加这行以包含std::find
 
 namespace Sanguosha {
 namespace Room {
+
+Room::Room(uint32_t id) : id_(id) {}
 
 bool Room::addPlayer(uint32_t playerId) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -69,10 +72,12 @@ bool Room::startGame() {
         return false;
     }
     
+    // 注释选将检查
+    return false; // 暂时禁用
     // 检查所有玩家是否已选将
     // TODO: 实现选将检查逻辑
     // 示例：假设所有玩家都已选将
-    bool allPlayersChosen = true; // 这里需要根据实际情况实现
+    /*bool allPlayersChosen = true; // 这里需要根据实际情况实现
     
     if (!allPlayersChosen) {
         return false;
@@ -80,6 +85,7 @@ bool Room::startGame() {
     
     state_ = State::PLAYING;
     return true;
+    */
 }
 
 bool Room::endGame() {

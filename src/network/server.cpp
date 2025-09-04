@@ -1,5 +1,4 @@
 #include "network/server.h"
-#include <iostream>
 #include "network/session.h"
 
 using boost::asio::ip::tcp;
@@ -8,7 +7,8 @@ namespace Sanguosha {
 namespace Network {
 
 Server::Server() 
-    : acceptor_(io_context_) {}
+    : io_context_(),
+      acceptor_(io_context_) {}
 
 void Server::start(unsigned short port) {
     tcp::endpoint endpoint(tcp::v4(), port);
@@ -28,12 +28,11 @@ void Server::do_accept() {
         [this](boost::system::error_code ec, tcp::socket socket) {
             if (!ec) {
                 std::cout << "New connection accepted" << std::endl;
-                // 创建Session并启动
                 auto session = std::make_shared<Session>(std::move(socket));
                 sessions_.insert(session);
                 session->start();
             }
-            do_accept(); // 继续接受新连接
+            do_accept();
         });
 }
 

@@ -1,41 +1,41 @@
-#ifndef ROOM_ROOM_MANAGER_H
-#define ROOM_ROOM_MANAGER_H
+#pragma once
 
-#include <map>
-#include <vector>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/io_context.hpp>
+#include "room/room.h" // 包含完整定义
 
 namespace Sanguosha {
 namespace Room {
-
-class Room;
-using RoomPtr = std::shared_ptr<Room>;
 
 class RoomManager {
 public:
     static RoomManager& Instance();
     
-    // 创建房间（返回房间ID）
     uint32_t createRoom();
-    
-    // 加入房间
+    uint32_t createRoom(const std::vector<uint32_t>& playerIds);
     bool joinRoom(uint32_t roomId, uint32_t playerId);
-    
-    // 离开房间
     bool leaveRoom(uint32_t roomId, uint32_t playerId);
-    
-    // 获取房间
-    RoomPtr getRoom(uint32_t roomId);
+    std::shared_ptr<Room> getRoom(uint32_t roomId); // 保持原始返回类型
+    void setIoContext(boost::asio::io_context& io);
+    void startCleanupTask();
+    uint32_t matchPlayers(const std::vector<uint32_t>& playerIds); // 添加声明
     
 private:
-    RoomManager() = default;
-    std::map<uint32_t, RoomPtr> rooms_;
+    RoomManager();
+    ~RoomManager();
+    void cleanupRooms();
+    
+    std::unordered_map<uint32_t, std::shared_ptr<Room>> rooms_;
+    uint32_t nextRoomId_ = 1;
     std::mutex mutex_;
-    uint32_t nextRoomId_ = 1000; // 起始房间ID
+    boost::asio::io_context* io_ = nullptr;
+    std::unique_ptr<boost::asio::steady_timer> cleanupTimer_;
+    
+    static boost::asio::io_context dummy_io_context_;
 };
 
 } // namespace Room
 } // namespace Sanguosha
-
-#endif // ROOM_ROOM_MANAGER_H
