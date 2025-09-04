@@ -38,6 +38,8 @@ add_library(sanguosha_server STATIC
     src/network/server.cpp
     src/network/session.cpp
     src/network/message_codec.cpp
+    src/room/room.cpp
+    src/room/room_manager.cpp
     ${PROTO_SRCS}
 )
 

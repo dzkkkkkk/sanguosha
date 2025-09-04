@@ -79,6 +79,9 @@ void Session::doReadBody() {
                     case sanguosha::HEARTBEAT:
                         handleHeartbeat(boost::system::error_code());
                         break;
+                    case sanguosha::ROOM_REQUEST:
+                        handleRoomRequest(msg.room_request());
+                        break;
                     default:
                         std::cerr << "Unknown message type: " << msg.type() << std::endl;
                 }
@@ -115,6 +118,52 @@ void Session::handleHeartbeat(const boost::system::error_code& ec) {
         // 处理心跳响应
         // 这里可以添加超时检测逻辑
     }
+}
+
+void Session::handleRoomRequest(const sanguosha::RoomRequest& request) {
+    sanguosha::GameMessage response;
+    response.set_type(sanguosha::ROOM_RESPONSE);
+    auto* room_res = response.mutable_room_response();
+    
+    auto& roomMgr = Sanguosha::Room::RoomManager::Instance();
+    
+    switch (request.action()) {
+        case sanguosha::CREATE_ROOM: {
+            uint32_t roomId = roomMgr.createRoom();
+            room_res->set_success(true);
+            room_res->mutable_room_info()->set_room_id(roomId);
+            break;
+        }
+        case sanguosha::JOIN_ROOM: {
+            bool success = roomMgr.joinRoom(request.room_id(), playerId_);
+            room_res->set_success(success);
+            if (success) {
+                room_res->mutable_room_info()->set_room_id(request.room_id());
+            } else {
+                room_res->set_error_message("Join room failed");
+            }
+            break;
+        }
+        // 其他操作类似
+        case sanguosha::LEAVE_ROOM: {
+            bool success = roomMgr.leaveRoom(request.room_id(), playerId_);
+            room_res->set_success(success);
+            if (!success) {
+                room_res->set_error_message("Leave room failed");
+            }
+            break;
+        }
+        case sanguosha::START_GAME: {
+            bool success = roomMgr.startGame(request.room_id());
+            room_res->set_success(success);
+            if (!success) {
+                room_res->set_error_message("Start game failed");
+            }
+            break;
+        }
+    }
+    
+    send(response);
 }
 
 void Session::send(const sanguosha::GameMessage& msg) {
