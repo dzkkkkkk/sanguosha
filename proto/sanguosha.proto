@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package sanguosha;
+
+// 基础消息类型
+enum MessageType {
+  UNKNOWN = 0;
+  LOGIN_REQUEST = 1;
+  LOGIN_RESPONSE = 2;
+  HEARTBEAT = 3;
+  ROOM_REQUEST = 4;  // 添加房间请求类型
+  ROOM_RESPONSE = 5; // 添加房间响应类型
+}
+
+// 登录请求
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+// 登录响应
+message LoginResponse {
+  bool success = 1;
+  string error_message = 2;
+  uint32 user_id = 3;
+}
+
+// 心跳消息
+message Heartbeat {
+  uint64 timestamp = 1;
+}
+
+// 房间操作类型
+enum RoomAction {
+  CREATE_ROOM = 0;
+  JOIN_ROOM = 1;
+  LEAVE_ROOM = 2;
+  START_GAME = 3;
+}
+
+// 房间信息
+message RoomInfo {
+  uint32 room_id = 1;
+  repeated uint32 players = 2;  // 玩家ID列表
+}
+
+// 房间请求
+message RoomRequest {
+  RoomAction action = 1;
+  uint32 room_id = 2;  // 用于加入/离开房间
+}
+
+// 房间响应
+message RoomResponse {
+  bool success = 1;
+  string error_message = 2;
+  RoomInfo room_info = 3;
+}
+
+// 顶层消息容器
+message GameMessage {
+  MessageType type = 1;
+  oneof content {
+    LoginRequest login_request = 2;
+    LoginResponse login_response = 3;
+    Heartbeat heartbeat = 4;
+    RoomRequest room_request = 5;  // 添加房间请求字段
+    RoomResponse room_response = 6; // 添加房间响应字段
+  }
+}

@@ -1,5 +1,6 @@
 #include "network/server.h"
 #include <iostream>
+#include "network/session.h"
 
 using boost::asio::ip::tcp;
 
@@ -27,7 +28,10 @@ void Server::do_accept() {
         [this](boost::system::error_code ec, tcp::socket socket) {
             if (!ec) {
                 std::cout << "New connection accepted" << std::endl;
-                // 后续添加会话处理逻辑
+                // 创建Session并启动
+                auto session = std::make_shared<Session>(std::move(socket));
+                sessions_.insert(session);
+                session->start();
             }
             do_accept(); // 继续接受新连接
         });

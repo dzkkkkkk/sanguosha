@@ -2,6 +2,8 @@
 #define NETWORK_SERVER_H
 
 #include <boost/asio.hpp>
+#include <set>
+#include "network/session.h"
 
 namespace Sanguosha {
 namespace Network {
@@ -16,6 +18,8 @@ private:
     
     boost::asio::io_context io_context_;
     boost::asio::ip::tcp::acceptor acceptor_;
+
+    std::set<std::shared_ptr<Session>> sessions_;
 };
 
 } // namespace Network
