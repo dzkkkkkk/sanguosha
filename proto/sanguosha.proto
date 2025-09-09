@@ -2,14 +2,17 @@ syntax = "proto3";
 
 package sanguosha;
 
-// 基础消息类型
+// 扩展消息类型
 enum MessageType {
   UNKNOWN = 0;
   LOGIN_REQUEST = 1;
   LOGIN_RESPONSE = 2;
   HEARTBEAT = 3;
-  ROOM_REQUEST = 4;  // 添加房间请求类型
-  ROOM_RESPONSE = 5; // 添加房间响应类型
+  ROOM_REQUEST = 4;
+  ROOM_RESPONSE = 5;
+  GAME_ACTION = 6;          // 新增：游戏操作
+  GAME_STATE = 7;           // 新增：游戏状态
+  GAME_START = 8;           // 新增：游戏开始
 }
 
 // 登录请求
@@ -57,14 +60,60 @@ message RoomResponse {
   RoomInfo room_info = 3;
 }
 
-// 顶层消息容器
+// 卡牌类型
+enum CardType {
+  CARD_UNKNOWN = 0;
+  CARD_ATTACK = 1;   // 杀
+  CARD_DEFEND = 2;   // 闪  
+  CARD_HEAL = 3;     // 桃
+}
+
+// 游戏操作类型
+enum ActionType {
+  ACTION_PLAY_CARD = 0;
+  ACTION_END_TURN = 1;
+}
+
+// 游戏操作请求
+message GameAction {
+  ActionType type = 1;
+  uint32 card_id = 2;        // 出的牌ID
+  uint32 target_player = 3;  // 目标玩家
+}
+
+// 玩家状态
+message PlayerState {
+  uint32 player_id = 1;
+  string username = 2;
+  uint32 hp = 3;
+  uint32 max_hp = 4;
+  repeated uint32 hand_cards = 5;  // 手牌ID列表
+}
+
+// 游戏状态
+message GameState {
+  uint32 current_player = 1;
+  repeated PlayerState players = 2;
+  uint32 phase = 3;  // 回合阶段
+}
+
+// 游戏开始通知
+message GameStart {
+  uint32 room_id = 1;
+  repeated uint32 player_ids = 2;
+}
+
+// 扩展顶层消息容器
 message GameMessage {
   MessageType type = 1;
   oneof content {
     LoginRequest login_request = 2;
     LoginResponse login_response = 3;
     Heartbeat heartbeat = 4;
-    RoomRequest room_request = 5;  // 添加房间请求字段
-    RoomResponse room_response = 6; // 添加房间响应字段
+    RoomRequest room_request = 5;
+    RoomResponse room_response = 6;
+    GameAction game_action = 7;    // 新增
+    GameState game_state = 8;     // 新增
+    GameStart game_start = 9;     // 新增
   }
 }
