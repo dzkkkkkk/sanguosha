@@ -1,6 +1,4 @@
-#ifndef NETWORK_SERVER_H
-#define NETWORK_SERVER_H
-
+#pragma once
 #include <boost/asio.hpp>
 #include <set>
 #include "network/session.h"
@@ -26,5 +24,3 @@ private:
 
 } // namespace Network
 } // namespace Sanguosha
-
-#endif // NETWORK_SERVER_H

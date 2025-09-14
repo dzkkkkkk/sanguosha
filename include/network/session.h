@@ -1,4 +1,3 @@
-
 #pragma once
 #include <boost/asio.hpp>
 #include <memory>
@@ -33,5 +32,3 @@ private:
 
 } // namespace Network
 } // namespace Sanguosha
-
-#endif // NETWORK_SESSION_H

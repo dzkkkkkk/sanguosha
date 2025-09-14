@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include <vector>
 #include <memory>
@@ -23,5 +21,3 @@ public:
 
 } // namespace Network
 } // namespace Sanguosha
-
-#endif // NETWORK_MESSAGE_CODEC_H
