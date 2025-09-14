@@ -1,3 +1,4 @@
+#include <algorithm>  // 添加这行
 #include "room/room.h"
 
 namespace Sanguosha {
