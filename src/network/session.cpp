@@ -1,9 +1,9 @@
 #include "network/session.h"
 #include "network/message_codec.h"
-#include <iostream>
 #include "room/room_manager.h"
-#include "game/game_manager.h"
-#include "room/room.h"
+#include <iostream>
+#include <cstdlib> // 用于rand()函数
+#include <ctime>   // 用于时间函数
 
 using boost::asio::ip::tcp;
 using boost::asio::steady_timer;
@@ -98,32 +98,18 @@ void Session::doReadBody() {
 }
 
 void Session::handleLogin(const sanguosha::LoginRequest& login) {
-    std::cout << "Login request from: " << login.username() << std::endl;
+    std::cout << "Login: " << login.username() << std::endl;
     
     sanguosha::GameMessage response;
     response.set_type(sanguosha::LOGIN_RESPONSE);
     auto* login_res = response.mutable_login_response();
     
-    // 简单验证：用户名为"test"，密码为"123"
-    if (login.username() == "test" && login.password() == "123") {
-        login_res->set_success(true);
-        login_res->set_user_id(1001); // 模拟用户ID
-        
-        // 设置玩家ID
-        playerId_ = 1001;
-    } else {
-        login_res->set_success(false);
-        login_res->set_error_message("Invalid username or password");
-    }
+    // 简化登录：直接分配用户ID
+    playerId_ = 1000 + rand() % 9000; // 随机生成用户ID
+    login_res->set_success(true);
+    login_res->set_user_id(playerId_);
     
     send(response);
-}
-
-void Session::handleHeartbeat(const boost::system::error_code& ec) {
-    if (!ec) {
-        // 处理心跳响应
-        // 这里可以添加超时检测逻辑
-    }
 }
 
 void Session::handleRoomRequest(const sanguosha::RoomRequest& request) {
@@ -136,35 +122,32 @@ void Session::handleRoomRequest(const sanguosha::RoomRequest& request) {
     switch (request.action()) {
         case sanguosha::CREATE_ROOM: {
             uint32_t roomId = roomMgr.createRoom();
-            room_res->set_success(true);
-            room_res->mutable_room_info()->set_room_id(roomId);
+            if (roomMgr.joinRoom(roomId, playerId_)) {
+                room_res->set_success(true);
+                room_res->mutable_room_info()->set_room_id(roomId);
+            } else {
+                room_res->set_success(false);
+                room_res->set_error_message("Create room failed");
+            }
             break;
         }
         case sanguosha::JOIN_ROOM: {
-            bool success = roomMgr.joinRoom(request.room_id(), playerId_);
-            room_res->set_success(success);
-            if (success) {
+            if (roomMgr.joinRoom(request.room_id(), playerId_)) {
+                room_res->set_success(true);
+                // 检查是否可以开始游戏
                 auto room = roomMgr.getRoom(request.room_id());
-                if (room && room->playerCount() >= 2) {
-                    // 暂时注释掉选将逻辑
-                    // room->startChoosing(); 
+                if (room && room->playerCount() == 2) {
+                    room->startGame();
                 }
             } else {
+                room_res->set_success(false);
                 room_res->set_error_message("Join room failed");
             }
             break;
         }
         case sanguosha::START_GAME: {
             room_res->set_success(false);
-            room_res->set_error_message("Start game is temporarily disabled");
-            break;
-        }
-        case sanguosha::LEAVE_ROOM: {
-            bool success = roomMgr.leaveRoom(request.room_id(), playerId_);
-            room_res->set_success(success);
-            if (!success) {
-                room_res->set_error_message("Leave room failed");
-            }
+            room_res->set_error_message("Start game is automatically handled");
             break;
         }
     }

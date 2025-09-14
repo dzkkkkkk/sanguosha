@@ -7,16 +7,14 @@
 
 namespace sanguosha {
 
-class Room;
 class Player;
 
 class GameInstance {
 public:
-    explicit GameInstance(Room* room);
-    ~GameInstance();
-
+    explicit GameInstance(uint32_t roomId);
+    
     // 开始1v1游戏
-    void startGame();
+    void startGame(const std::vector<uint32_t>& playerIds);
     
     // 处理玩家操作
     bool processPlayerAction(uint32_t playerId, const GameAction& action);
@@ -25,33 +23,16 @@ public:
     GameState getGameState() const;
 
 private:
-    // 初始化牌堆
-    void initDeck();
-    
-    // 分发起始手牌
-    void dealInitialCards();
-    
-    // 处理回合
-    void processTurn(uint32_t playerId);
-    
-    // 获取下一个玩家
-    uint32_t getNextPlayer() const;
-    
-    // 检查游戏结束条件
-    bool checkGameOver();
-    
-    // 解决攻击
-    void resolveAttack(uint32_t attacker, uint32_t target);
+    // 简化：移除牌堆初始化等复杂逻辑
+    void initPlayerStates(const std::vector<uint32_t>& playerIds);
     
     // 广播游戏状态
     void broadcastGameState();
 
-    Room* room_;
-    std::vector<uint32_t> deck_;
+    uint32_t roomId_;
     std::unordered_map<uint32_t, PlayerState> playerStates_;
     uint32_t currentPlayer_;
     bool gameOver_;
-    std::mt19937 rng_;
 };
 
 }

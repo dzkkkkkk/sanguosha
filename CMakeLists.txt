@@ -13,49 +13,31 @@ find_package(Boost 1.71 REQUIRED COMPONENTS system)
 # Protobuf
 find_package(Protobuf REQUIRED)
 
-# Hiredis - 手动设置路径
-set(Hiredis_INCLUDE_DIRS "/usr/include/hiredis")
-set(Hiredis_LIBRARIES "/usr/lib/x86_64-linux-gnu/libhiredis.so")
-
-# SQLite3
-find_package(SQLite3 REQUIRED)
-
 # 包含目录
 include_directories(
     include 
     ${Boost_INCLUDE_DIRS}
     ${Protobuf_INCLUDE_DIRS}
-    ${Hiredis_INCLUDE_DIRS}
-    ${SQLite3_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/proto/generated
 )
 
-# 添加protobuf生成的文件
-file(GLOB PROTO_SRCS "${PROJECT_SOURCE_DIR}/proto/generated/*.cc")
+# 添加核心模块
+add_subdirectory(src/game)
+add_subdirectory(src/network)
+add_subdirectory(src/room)
 
-# 创建静态库
-add_library(sanguosha_server STATIC
-    src/network/server.cpp
-    src/network/session.cpp
-    src/network/message_codec.cpp
-    src/room/room.cpp
-    src/room/room_manager.cpp
-    src/game/game_manager.cpp
-    ${PROTO_SRCS}
+# 简化可执行文件
+add_executable(sanguosha_server
+    src/main.cpp
+    $<TARGET_OBJECTS:game>
+    $<TARGET_OBJECTS:network>
+    $<TARGET_OBJECTS:room>
 )
 
-# 创建主可执行文件
-add_executable(server src/main.cpp)
-target_link_libraries(server PRIVATE sanguosha_server
-    ${Boost_LIBRARIES}
-    ${Protobuf_LIBRARIES}
-    ${Hiredis_LIBRARIES}
-    ${SQLite3_LIBRARIES}
-    pthread
+# 简化依赖
+target_link_libraries(sanguosha_server
+    PRIVATE 
+        Boost::system
+        protobuf::libprotobuf
+        pthread
 )
-
-# 启用测试
-enable_testing()
-
-# 添加测试子目录
-add_subdirectory(test)

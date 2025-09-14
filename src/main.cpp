@@ -1,23 +1,14 @@
 #include <iostream>
 #include "network/server.h"
-#include "room/room_manager.h"
 
 int main() {
-    std::cout << "Starting Sanguosha Server..." << std::endl;
+    std::cout << "Starting Simplified Sanguosha Server v1.0" << std::endl;
     
     try {
         Sanguosha::Network::Server server;
-        
-        // 初始化房间管理器
-        auto& roomMgr = Sanguosha::Room::RoomManager::Instance();
-        roomMgr.setIoContext(server.getIoContext());
-        
-        // 启动房间清理任务
-        roomMgr.startCleanupTask();
-        
-        server.start(9527);
+        server.start(9527); // 使用默认端口
     } catch (const std::exception& e) {
-        std::cerr << "Server fatal error: " << e.what() << std::endl;
+        std::cerr << "Server error: " << e.what() << std::endl;
         return 1;
     }
     
