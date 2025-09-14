@@ -97,6 +97,32 @@ void Session::doReadBody() {
         });
 }
 
+void Session::handleHeartbeat(const boost::system::error_code& ec) {
+    if (ec) {
+        // 如果有错误，记录日志但不中断连接
+        std::cerr << "Heartbeat error: " << ec.message() << std::endl;
+        return;
+    }
+    
+    // 重置心跳计时器
+    heartbeat_timer_.expires_after(std::chrono::seconds(HEARTBEAT_INTERVAL));
+    heartbeat_timer_.async_wait(
+        [self = shared_from_this()](const boost::system::error_code& ec) {
+            if (!ec) {
+                // 发送心跳包
+                sanguosha::GameMessage msg;
+                msg.set_type(sanguosha::HEARTBEAT);
+                self->send(msg);
+                
+                // 重新设置计时器
+                self->startHeartbeat();
+            }
+        });
+    
+    // 可以在这里添加其他心跳处理逻辑
+    std::cout << "Heartbeat received from player: " << playerId_ << std::endl;
+}
+
 void Session::handleLogin(const sanguosha::LoginRequest& login) {
     std::cout << "Login: " << login.username() << std::endl;
     
