@@ -3,25 +3,26 @@
 #include <vector>
 #include <unordered_map>
 #include <random>
-#include "proto/sanguosha.pb.h"
+#include "sanguosha.pb.h"
+
+// 前向声明，避免包含player.h
+namespace sanguosha {
+class Player;
+}
+
+// 前向声明RoomManager
+namespace Sanguosha {
+namespace Room {
+class RoomManager;
+}
+}
 
 namespace sanguosha {
 
-class Player {
-public:
-    Player(uint32_t id, const std::string& username);
-    
-    uint32_t getId() const { return id_; }
-    const std::string& getUsername() const { return username_; }
-    
-private:
-    uint32_t id_;
-    std::string username_;
-};
-
 class GameInstance {
 public:
-    explicit GameInstance(uint32_t roomId);
+    // 修正构造函数声明，添加RoomManager参数
+    explicit GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager);
     
     // 开始1v1游戏
     void startGame(const std::vector<uint32_t>& playerIds);
@@ -33,13 +34,21 @@ public:
     GameState getGameState() const;
 
 private:
-    // 简化：移除牌堆初始化等复杂逻辑
-    void initPlayerStates(const std::vector<uint32_t>& playerIds);
-    
-    // 广播游戏状态
+    // 添加缺失的方法声明
+    void initDeck();
+    void dealInitialCards();
+    void processTurn(uint32_t playerId);
+    void resolveAttack(uint32_t attacker, uint32_t target);
     void broadcastGameState();
-
+    uint32_t getNextPlayer();
+    bool checkGameOver();
+    
+    // 添加必要的成员变量
+    std::vector<uint32_t> deck_;
+    std::mt19937 rng_;
+    
     uint32_t roomId_;
+    Sanguosha::Room::RoomManager& roomManager_; // 添加RoomManager引用
     std::unordered_map<uint32_t, PlayerState> playerStates_;
     uint32_t currentPlayer_;
     bool gameOver_;

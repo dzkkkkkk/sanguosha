@@ -1,6 +1,6 @@
-#ifndef NETWORK_MESSAGE_CODEC_H
-#define NETWORK_MESSAGE_CODEC_H
 
+
+#pragma once
 #include <vector>
 #include <memory>
 #include <boost/asio.hpp>

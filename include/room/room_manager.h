@@ -5,7 +5,9 @@
 #include <mutex>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/io_context.hpp>
-#include "room/room.h" // 包含完整定义
+#include "room/room.h"
+#include "sanguosha.pb.h" // 添加protobuf头文件
+#include <google/protobuf/message.h> // 添加google protobuf消息头文件
 
 namespace Sanguosha {
 namespace Room {
@@ -18,10 +20,12 @@ public:
     uint32_t createRoom(const std::vector<uint32_t>& playerIds);
     bool joinRoom(uint32_t roomId, uint32_t playerId);
     bool leaveRoom(uint32_t roomId, uint32_t playerId);
-    std::shared_ptr<Room> getRoom(uint32_t roomId); // 保持原始返回类型
+    std::shared_ptr<Room> getRoom(uint32_t roomId);
     void setIoContext(boost::asio::io_context& io);
     void startCleanupTask();
-    uint32_t matchPlayers(const std::vector<uint32_t>& playerIds); // 添加声明
+    uint32_t matchPlayers(const std::vector<uint32_t>& playerIds);
+    // 修正MessageType类型声明
+    void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message);
     
 private:
     RoomManager();

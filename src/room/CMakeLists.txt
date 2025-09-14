@@ -8,6 +8,7 @@ target_include_directories(room
     PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/include
+        ${Protobuf_INCLUDE_DIRS}
 )
 
 target_link_libraries(room

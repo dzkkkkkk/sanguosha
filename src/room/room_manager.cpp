@@ -2,6 +2,7 @@
 #include "room/room.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 namespace Sanguosha {
 namespace Room {
@@ -126,6 +127,23 @@ void RoomManager::cleanupRooms() {
         } else {
             ++it;
         }
+    }
+}
+
+// 修正MessageType类型
+void RoomManager::broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = rooms_.find(roomId);
+    if (it != rooms_.end()) {
+        // 获取房间中的所有玩家
+        const std::vector<uint32_t>& players = it->second->getPlayers();
+        
+        // 假设网络模块有一个 broadcastToPlayers 方法
+        // 例如: networkModule.broadcastToPlayers(players, type, message);
+        std::cout << "Broadcasting message to room " << roomId << " with " << players.size() << " players." << std::endl;
+        
+        // 这里可以调用实际的网络模块方法
+        // networkModule.broadcastToPlayers(players, type, message);
     }
 }
 

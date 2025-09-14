@@ -1,46 +1,37 @@
 #include "game/game_instance.h"
 #include "game/player.h"
-//#include "network/connection.h"
-#include "room/room.h"
+#include "room/room_manager.h" // 添加包含
+#include <random>
+#include <algorithm>
 
 namespace sanguosha {
 
-GameInstance::GameInstance(Room* room) 
-    : room_(room), currentPlayer_(0), gameOver_(false) {
+// 修正构造函数实现
+GameInstance::GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager) 
+    : roomId_(roomId), roomManager_(roomManager), currentPlayer_(0), gameOver_(false) {
     // 初始化随机数生成器
     std::random_device rd;
     rng_.seed(rd());
-    
-    // 初始化玩家状态
-    for (auto player : room_->getPlayers()) {
-        PlayerState state;
-        state.set_player_id(player->getId());
-        state.set_username(player->getUsername());
-        state.set_hp(4);
-        state.set_max_hp(4);
-        playerStates_[player->getId()] = state;
-    }
 }
 
-void GameInstance::startGame() {
-    // 1. 初始化牌堆
-    initDeck();
-    
-    // 2. 分发起始手牌
-    dealInitialCards();
-    
-    // 3. 决定先手玩家
-    auto players = room_->getPlayers();
-    currentPlayer_ = players[0]->getId();
-    
-    // 4. 通知游戏开始
-    GameStart startMsg;
-    startMsg.set_room_id(room_->getId());
-    for (auto player : players) {
-        startMsg.add_player_ids(player->getId());
+void GameInstance::startGame(const std::vector<uint32_t>& playerIds) {
+    // 1. 初始化玩家状态
+    for (auto playerId : playerIds) {
+        PlayerState state;
+        state.set_player_id(playerId);
+        state.set_hp(4);
+        state.set_max_hp(4);
+        playerStates_[playerId] = state;
     }
     
-    room_->broadcastMessage(GAME_START, startMsg);
+    // 2. 初始化牌堆
+    initDeck();
+    
+    // 3. 分发起始手牌
+    dealInitialCards();
+    
+    // 4. 决定先手玩家
+    currentPlayer_ = playerIds[0];
     
     // 5. 开始第一个回合
     processTurn(currentPlayer_);
@@ -50,20 +41,19 @@ void GameInstance::initDeck() {
     deck_.clear();
     
     // 简单卡牌配置：30张杀，15张闪，8张桃
-    for (int i = 0; i < 30; i++) deck_.push_back(static_cast<uint32_t>(CARD_ATTACK));
-    for (int i = 0; i < 15; i++) deck_.push_back(static_cast<uint32_t>(CARD_DEFEND));
-    for (int i = 0; i < 8; i++) deck_.push_back(static_cast<uint32_t>(CARD_HEAL));
+    for (int i = 0; i < 30; i++) deck_.push_back(static_cast<uint32_t>(sanguosha::CARD_ATTACK));
+    for (int i = 0; i < 15; i++) deck_.push_back(static_cast<uint32_t>(sanguosha::CARD_DEFEND));
+    for (int i = 0; i < 8; i++) deck_.push_back(static_cast<uint32_t>(sanguosha::CARD_HEAL));
     
     // 洗牌
     std::shuffle(deck_.begin(), deck_.end(), rng_);
 }
 
 void GameInstance::dealInitialCards() {
-    auto players = room_->getPlayers();
-    
     // 每个玩家发4张牌
-    for (auto player : players) {
-        auto& state = playerStates_[player->getId()];
+    for (const auto& pair : playerStates_) {
+        uint32_t playerId = pair.first;
+        auto& state = playerStates_[playerId];
         for (int i = 0; i < 4 && !deck_.empty(); i++) {
             uint32_t card = deck_.back();
             deck_.pop_back();
@@ -88,14 +78,14 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
     }
     
     switch (action.type()) {
-        case ACTION_PLAY_CARD:
+        case sanguosha::ACTION_PLAY_CARD:
             // 处理出牌逻辑
-            if (action.card_id() == CARD_ATTACK && action.target_player() != 0) {
+            if (action.card_id() == sanguosha::CARD_ATTACK && action.target_player() != 0) {
                 resolveAttack(playerId, action.target_player());
             }
             break;
             
-        case ACTION_END_TURN:
+        case sanguosha::ACTION_END_TURN:
             // 结束回合，切换到下一个玩家
             currentPlayer_ = getNextPlayer();
             processTurn(currentPlayer_);
@@ -129,7 +119,30 @@ void GameInstance::broadcastGameState() {
         playerState->CopyFrom(pair.second);
     }
     
-    room_->broadcastMessage(GAME_STATE, state);
+    // 使用roomManager_引用广播消息
+    roomManager_.broadcastMessage(roomId_, sanguosha::GAME_STATE, state);
 }
 
+uint32_t GameInstance::getNextPlayer() {
+    // 简单实现：按玩家ID顺序获取下一个玩家
+    auto it = playerStates_.find(currentPlayer_);
+    if (it != playerStates_.end()) {
+        auto nextIt = std::next(it);
+        if (nextIt != playerStates_.end()) {
+            return nextIt->first;
+        }
+    }
+    return playerStates_.begin()->first; // 如果是最后一个玩家，回到第一个玩家
 }
+
+bool GameInstance::checkGameOver() {
+    // 简单实现：检查是否有玩家生命值为0
+    for (const auto& pair : playerStates_) {
+        if (pair.second.hp() <= 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace sanguosha
