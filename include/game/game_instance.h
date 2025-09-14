@@ -7,7 +7,17 @@
 
 namespace sanguosha {
 
-class Player;
+class Player {
+public:
+    Player(uint32_t id, const std::string& username);
+    
+    uint32_t getId() const { return id_; }
+    const std::string& getUsername() const { return username_; }
+    
+private:
+    uint32_t id_;
+    std::string username_;
+};
 
 class GameInstance {
 public:

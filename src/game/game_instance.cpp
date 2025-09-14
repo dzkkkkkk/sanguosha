@@ -1,5 +1,6 @@
 #include "game/game_instance.h"
 #include "game/player.h"
+#include "network/connection.h"
 #include "room.h"
 
 namespace sanguosha {
