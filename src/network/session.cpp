@@ -11,9 +11,16 @@ using boost::asio::steady_timer;
 namespace Sanguosha {
 namespace Network {
 
-Session::Session(tcp::socket socket)
+Session::Session(tcp::socket socket, Server& server)
     : socket_(std::move(socket)),
+      server_(server), // 初始化server_引用
       heartbeat_timer_(socket_.get_executor()) {
+}
+
+Session::~Session() {
+    if (playerId_ != 0) {
+        server_.unregisterSession(playerId_);
+    }
 }
 
 void Session::start() {
@@ -134,6 +141,9 @@ void Session::handleLogin(const sanguosha::LoginRequest& login) {
     playerId_ = 1000 + rand() % 9000; // 随机生成用户ID
     login_res->set_success(true);
     login_res->set_user_id(playerId_);
+    
+    // 注册会话到服务器
+    server_.registerSession(playerId_, shared_from_this());
     
     send(response);
 }

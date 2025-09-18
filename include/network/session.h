@@ -2,13 +2,16 @@
 #include <boost/asio.hpp>
 #include <memory>
 #include "sanguosha.pb.h"
+#include "network/server.h" // 确保包含Server的头文件
 
 namespace Sanguosha {
 namespace Network {
 
 class Session : public std::enable_shared_from_this<Session> {
 public:
-    explicit Session(boost::asio::ip::tcp::socket socket);
+    // 修改构造函数，接收Server的引用
+    explicit Session(boost::asio::ip::tcp::socket socket, Server& server);
+
     void start();
     void send(const sanguosha::GameMessage& msg);
     
@@ -28,6 +31,8 @@ private:
     uint32_t playerId_ = 0; // 添加玩家ID成员
     static constexpr int HEARTBEAT_INTERVAL = 30;
     static constexpr int HEARTBEAT_TIMEOUT = 60;
+
+    Server& server_; // 添加Server的引用
 };
 
 } // namespace Network

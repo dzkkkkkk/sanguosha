@@ -29,7 +29,8 @@ void Server::do_accept() {
         [this](boost::system::error_code ec, tcp::socket socket) {
             if (!ec) {
                 std::cout << "New connection accepted" << std::endl;
-                auto session = std::make_shared<Session>(std::move(socket));
+                // 创建Session时，传入this（Server）的引用
+                auto session = std::make_shared<Session>(std::move(socket), *this);
                 sessions_.insert(session);
                 session->start();
             }
