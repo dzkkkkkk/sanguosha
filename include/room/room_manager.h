@@ -9,6 +9,11 @@
 #include "sanguosha.pb.h" // 添加protobuf头文件
 #include <google/protobuf/message.h> // 添加google protobuf消息头文件
 
+// 前向声明
+namespace Network {
+    class Server;
+}
+
 namespace Sanguosha {
 namespace Room {
 
@@ -24,8 +29,9 @@ public:
     void setIoContext(boost::asio::io_context& io);
     void startCleanupTask();
     uint32_t matchPlayers(const std::vector<uint32_t>& playerIds);
-    // 修正MessageType类型声明
-    void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message);
+    
+    // 修改广播方法，接收Server引用
+    void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message, Network::Server& server);
     
 private:
     RoomManager();

@@ -1,5 +1,6 @@
 #include "room/room_manager.h"
 #include "room/room.h"
+#include "network/server.h" // 包含Server的头文件
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -130,20 +131,37 @@ void RoomManager::cleanupRooms() {
     }
 }
 
-// 修正MessageType类型
-void RoomManager::broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message) {
+void RoomManager::broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message, Network::Server& server) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = rooms_.find(roomId);
     if (it != rooms_.end()) {
-        // 获取房间中的所有玩家
         const std::vector<uint32_t>& players = it->second->getPlayers();
         
-        // 假设网络模块有一个 broadcastToPlayers 方法
-        // 例如: networkModule.broadcastToPlayers(players, type, message);
-        std::cout << "Broadcasting message to room " << roomId << " with " << players.size() << " players." << std::endl;
+        sanguosha::GameMessage gameMsg;
+        gameMsg.set_type(type);
         
-        // 这里可以调用实际的网络模块方法
-        // networkModule.broadcastToPlayers(players, type, message);
+        // 根据不同的消息类型，设置对应的字段
+        switch (type) {
+            case sanguosha::GAME_STATE:
+                gameMsg.mutable_game_state()->CopyFrom(dynamic_cast<const sanguosha::GameState&>(message));
+                break;
+            case sanguosha::GAME_START:
+                gameMsg.mutable_game_start()->CopyFrom(dynamic_cast<const sanguosha::GameStart&>(message));
+                break;
+            case sanguosha::ROOM_RESPONSE:
+                gameMsg.mutable_room_response()->CopyFrom(dynamic_cast<const sanguosha::RoomResponse&>(message));
+                break;
+            // ... 处理其他需要的消息类型 ...
+            default:
+                std::cerr << "Unknown message type for broadcast: " << type << std::endl;
+                return;
+        }
+
+        for (uint32_t playerId : players) {
+            if (auto session = server.getSession(playerId)) {
+                session->send(gameMsg);
+            }
+        }
     }
 }
 

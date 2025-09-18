@@ -17,19 +17,24 @@ class RoomManager;
 }
 }
 
+// 前向声明Server
+namespace Network {
+    class Server;
+}
+
 namespace sanguosha {
 
 class GameInstance {
 public:
-    // 修正构造函数声明，添加RoomManager参数
-    explicit GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager);
-    
+    // 修改构造函数，增加Server引用
+    explicit GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager, Sanguosha::Network::Server& server);
+
     // 开始1v1游戏
     void startGame(const std::vector<uint32_t>& playerIds);
-    
+
     // 处理玩家操作
     bool processPlayerAction(uint32_t playerId, const GameAction& action);
-    
+
     // 获取当前游戏状态
     GameState getGameState() const;
 
@@ -42,16 +47,17 @@ private:
     void broadcastGameState();
     uint32_t getNextPlayer();
     bool checkGameOver();
-    
+
     // 添加必要的成员变量
     std::vector<uint32_t> deck_;
     std::mt19937 rng_;
-    
+
     uint32_t roomId_;
     Sanguosha::Room::RoomManager& roomManager_; // 添加RoomManager引用
+    Sanguosha::Network::Server& server_; // 添加Server的引用
     std::unordered_map<uint32_t, PlayerState> playerStates_;
     uint32_t currentPlayer_;
     bool gameOver_;
 };
 
-}
+} // namespace sanguosha

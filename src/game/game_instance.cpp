@@ -6,9 +6,9 @@
 
 namespace sanguosha {
 
-// 修正构造函数实现
-GameInstance::GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager) 
-    : roomId_(roomId), roomManager_(roomManager), currentPlayer_(0), gameOver_(false) {
+// 修改构造函数初始化列表
+GameInstance::GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager, Sanguosha::Network::Server& server)
+    : roomId_(roomId), roomManager_(roomManager), server_(server), currentPlayer_(0), gameOver_(false) {
     // 初始化随机数生成器
     std::random_device rd;
     rng_.seed(rd());
@@ -119,8 +119,8 @@ void GameInstance::broadcastGameState() {
         playerState->CopyFrom(pair.second);
     }
     
-    // 使用roomManager_引用广播消息
-    roomManager_.broadcastMessage(roomId_, sanguosha::GAME_STATE, state);
+    // 调用roomManager的广播方法，并传入server_
+    roomManager_.broadcastMessage(roomId_, sanguosha::GAME_STATE, state, server_);
 }
 
 uint32_t GameInstance::getNextPlayer() {
