@@ -1,4 +1,6 @@
 #include "room/room.h"
+#include "game/game_instance.h" // 包含GameInstance头文件
+#include "network/server.h"     // 包含Server头文件
 #include <algorithm>
 
 namespace Sanguosha {
@@ -23,12 +25,17 @@ bool Room::removePlayer(uint32_t playerId) {
     return true;
 }
 
-bool Room::startGame() {
+bool Room::startGame(RoomManager& roomManager, Network::Server& server) {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (players_.size() != 2) // 需要恰好2人才能开始游戏
+    if (players_.size() != 2 || state_ != State::WAITING) { // 假设2人开始游戏
         return false;
-    
+    }
     state_ = State::PLAYING;
+    
+    // 核心：创建GameInstance！
+    gameInstance_ = std::make_shared<sanguosha::GameInstance>(id_, roomManager, server);
+    gameInstance_->startGame(players_); // 将本房间的玩家列表传入
+    
     return true;
 }
 

@@ -33,6 +33,9 @@ public:
     // 修改广播方法，接收Server引用
     void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message, Network::Server& server);
     
+    // 设置Server的方法
+    void setServer(Network::Server& server) { serverPtr_ = &server; }
+
 private:
     RoomManager();
     ~RoomManager();
@@ -45,6 +48,8 @@ private:
     std::unique_ptr<boost::asio::steady_timer> cleanupTimer_;
     
     static boost::asio::io_context dummy_io_context_;
+    
+    Network::Server* serverPtr_ = nullptr; // 添加一个Server指针
 };
 
 } // namespace Room

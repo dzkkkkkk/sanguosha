@@ -31,6 +31,10 @@ RoomManager& RoomManager::Instance() {
     return instance;
 }
 
+void RoomManager::setServer(Network::Server& server) {
+    serverPtr_ = &server;
+}
+
 uint32_t RoomManager::createRoom() {
     return createRoom({});
 }
@@ -54,7 +58,15 @@ bool RoomManager::joinRoom(uint32_t roomId, uint32_t playerId) {
     if (it == rooms_.end()) {
         return false;
     }
-    return it->second->addPlayer(playerId);
+    bool success = it->second->addPlayer(playerId);
+    
+    // 关键：如果加入成功，并且房间人数达到要求，则开始游戏！
+    if (success && it->second->playerCount() == 2) { // 2人游戏
+        if (serverPtr_ != nullptr) { // 确保Server指针已设置
+            it->second->startGame(*this, *serverPtr_);
+        }
+    }
+    return success;
 }
 
 bool RoomManager::leaveRoom(uint32_t roomId, uint32_t playerId) {
