@@ -1,5 +1,6 @@
 #include "network/server.h"
-#include "network/session.h"
+#include "network/session.h" // 确保包含Session的头文件
+#include <iostream>
 
 using boost::asio::ip::tcp;
 
@@ -34,6 +35,27 @@ void Server::do_accept() {
             }
             do_accept();
         });
+}
+
+void Server::registerSession(uint32_t playerId, std::shared_ptr<Session> session) {
+    std::lock_guard<std::mutex> lock(sessionMutex_);
+    playerSessions_[playerId] = session; // 存储weak_ptr，避免循环引用
+    std::cout << "Player " << playerId << " session registered." << std::endl;
+}
+
+void Server::unregisterSession(uint32_t playerId) {
+    std::lock_guard<std::mutex> lock(sessionMutex_);
+    playerSessions_.erase(playerId);
+    std::cout << "Player " << playerId << " session unregistered." << std::endl;
+}
+
+std::shared_ptr<Session> Server::getSession(uint32_t playerId) {
+    std::lock_guard<std::mutex> lock(sessionMutex_);
+    auto it = playerSessions_.find(playerId);
+    if (it != playerSessions_.end()) {
+        return it->second.lock(); // 将weak_ptr提升为shared_ptr
+    }
+    return nullptr;
 }
 
 } // namespace Network
