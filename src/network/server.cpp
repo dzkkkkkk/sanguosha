@@ -54,7 +54,7 @@ std::shared_ptr<Session> Server::getSession(uint32_t playerId) {
     std::lock_guard<std::mutex> lock(sessionMutex_);
     auto it = playerSessions_.find(playerId);
     if (it != playerSessions_.end()) {
-        return it->second; // 返回shared_ptr
+        return it->second.lock(); // 使用lock()将weak_ptr转为shared_ptr
     }
     return nullptr;
 }

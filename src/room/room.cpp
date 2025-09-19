@@ -1,14 +1,17 @@
 #include "room/room.h"
-#include "game/game_instance.h" // 包含GameInstance头文件
-#include "network/server.h"     // 包含Server头文件
+#include "room/room_manager.h"
+#include "game/game_instance.h"
+#include "network/server.h"
 #include <algorithm>
 
 namespace Sanguosha {
 namespace Room {
 
+Room::Room(uint32_t id) : id_(id), state_(State::WAITING) {}
+
 bool Room::addPlayer(uint32_t playerId) {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (players_.size() >= 2) // 只支持2人游戏
+    if (players_.size() >= 2)
         return false;
     
     players_.push_back(playerId);
@@ -27,17 +30,25 @@ bool Room::removePlayer(uint32_t playerId) {
 
 bool Room::startGame(RoomManager& roomManager, Network::Server& server) {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (players_.size() != 2 || state_ != State::WAITING) { // 假设2人开始游戏
+    if (players_.size() != 2 || state_ != State::WAITING) {
         return false;
     }
     state_ = State::PLAYING;
     
-    // 核心：创建GameInstance！
     gameInstance_ = std::make_shared<sanguosha::GameInstance>(id_, roomManager, server);
-    gameInstance_->startGame(players_); // 将本房间的玩家列表传入
+    gameInstance_->startGame(players_);
     
     return true;
 }
+
+uint32_t Room::playerCount() const { return players_.size(); }
+uint32_t Room::id() const { return id_; }
+Room::State Room::state() const { return state_; }
+
+const std::vector<uint32_t>& Room::getPlayers() const { return players_; }
+
+bool Room::isPlaying() const { return state_ == State::PLAYING; }
+std::shared_ptr<sanguosha::GameInstance> Room::getGameInstance() const { return gameInstance_; }
 
 } // namespace Room
 } // namespace Sanguosha

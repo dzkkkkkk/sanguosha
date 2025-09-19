@@ -5,12 +5,14 @@
 #include <mutex>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/io_context.hpp>
-#include "room/room.h"
 #include "sanguosha.pb.h"
 #include <google/protobuf/message.h>
 
-// 前向声明
+// 前向声明替代包含
 namespace Sanguosha {
+namespace Room {
+    class Room; // 前向声明Room类
+}
 namespace Network {
     class Server;
 }
@@ -27,15 +29,15 @@ public:
     uint32_t createRoom(const std::vector<uint32_t>& playerIds);
     bool joinRoom(uint32_t roomId, uint32_t playerId);
     bool leaveRoom(uint32_t roomId, uint32_t playerId);
-    std::shared_ptr<Room> getRoom(uint32_t roomId);
+    std::shared_ptr<Room> getRoom(uint32_t roomId); // 使用完整命名空间
     void setIoContext(boost::asio::io_context& io);
     void startCleanupTask();
     uint32_t matchPlayers(const std::vector<uint32_t>& playerIds);
     
-    // 修改广播方法，接收Server引用
-    void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message, Network::Server& server);
+    void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, 
+                         const google::protobuf::Message& message, 
+                         Network::Server& server);
     
-    // 设置Server的方法（改为声明，在cpp中定义）
     void setServer(Network::Server& server);
 
 private:
@@ -51,7 +53,7 @@ private:
     
     static boost::asio::io_context dummy_io_context_;
     
-    Network::Server* serverPtr_ = nullptr; // 添加一个Server指针
+    Network::Server* serverPtr_ = nullptr;
 };
 
 } // namespace Room
