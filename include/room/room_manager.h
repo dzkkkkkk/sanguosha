@@ -6,12 +6,14 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/io_context.hpp>
 #include "room/room.h"
-#include "sanguosha.pb.h" // 添加protobuf头文件
-#include <google/protobuf/message.h> // 添加google protobuf消息头文件
+#include "sanguosha.pb.h"
+#include <google/protobuf/message.h>
 
 // 前向声明
+namespace Sanguosha {
 namespace Network {
     class Server;
+}
 }
 
 namespace Sanguosha {
@@ -33,8 +35,8 @@ public:
     // 修改广播方法，接收Server引用
     void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message, Network::Server& server);
     
-    // 设置Server的方法
-    void setServer(Network::Server& server) { serverPtr_ = &server; }
+    // 设置Server的方法（改为声明，在cpp中定义）
+    void setServer(Network::Server& server);
 
 private:
     RoomManager();

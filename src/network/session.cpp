@@ -2,8 +2,8 @@
 #include "network/message_codec.h"
 #include "room/room_manager.h"
 #include <iostream>
-#include <cstdlib> // 用于rand()函数
-#include <ctime>   // 用于时间函数
+#include <cstdlib>
+#include <ctime>
 
 using boost::asio::ip::tcp;
 using boost::asio::steady_timer;
@@ -13,7 +13,7 @@ namespace Network {
 
 Session::Session(tcp::socket socket, Server& server)
     : socket_(std::move(socket)),
-      server_(server), // 初始化server_引用
+      server_(server),
       heartbeat_timer_(socket_.get_executor()) {
 }
 
@@ -173,7 +173,8 @@ void Session::handleRoomRequest(const sanguosha::RoomRequest& request) {
                 // 检查是否可以开始游戏
                 auto room = roomMgr.getRoom(request.room_id());
                 if (room && room->playerCount() == 2) {
-                    room->startGame();
+                    // 修正：传递roomManager和server引用
+                    room->startGame(roomMgr, server_);
                 }
             } else {
                 room_res->set_success(false);

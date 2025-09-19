@@ -2,7 +2,12 @@
 #include <boost/asio.hpp>
 #include <memory>
 #include "sanguosha.pb.h"
-#include "network/server.h" // 确保包含Server的头文件
+// 前向声明 Server
+namespace Sanguosha {
+namespace Network {
+class Server;
+}
+}
 
 namespace Sanguosha {
 namespace Network {

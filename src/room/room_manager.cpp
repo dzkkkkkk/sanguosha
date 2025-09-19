@@ -1,6 +1,6 @@
 #include "room/room_manager.h"
 #include "room/room.h"
-#include "network/server.h" // 包含Server的头文件
+#include "network/server.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -11,15 +11,12 @@ namespace Room {
 // 静态成员初始化
 boost::asio::io_context RoomManager::dummy_io_context_;
 
-// 构造函数
 RoomManager::RoomManager() 
     : io_(nullptr),
       cleanupTimer_(std::make_unique<boost::asio::steady_timer>(dummy_io_context_)) {
 }
 
-// 析构函数
 RoomManager::~RoomManager() {
-    // 确保定时器被正确销毁
     if (cleanupTimer_) {
         boost::system::error_code ec;
         cleanupTimer_->cancel(ec);
@@ -29,10 +26,6 @@ RoomManager::~RoomManager() {
 RoomManager& RoomManager::Instance() {
     static RoomManager instance;
     return instance;
-}
-
-void RoomManager::setServer(Network::Server& server) {
-    serverPtr_ = &server;
 }
 
 uint32_t RoomManager::createRoom() {
