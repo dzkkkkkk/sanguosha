@@ -32,6 +32,10 @@ uint32_t RoomManager::createRoom() {
     return createRoom({});
 }
 
+void RoomManager::setServer(Sanguosha::Network::Server& server) {
+    serverPtr_ = &server;
+}
+
 uint32_t RoomManager::createRoom(const std::vector<uint32_t>& playerIds) {
     std::lock_guard<std::mutex> lock(mutex_);
     uint32_t roomId = nextRoomId_++;

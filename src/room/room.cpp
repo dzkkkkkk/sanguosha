@@ -28,7 +28,7 @@ bool Room::removePlayer(uint32_t playerId) {
     return true;
 }
 
-bool Room::startGame(RoomManager& roomManager, Network::Server& server) {
+bool Room::startGame(RoomManager& roomManager, Sanguosha::Network::Server& server) { // 使用完整命名空间
     std::lock_guard<std::mutex> lock(mutex_);
     if (players_.size() != 2 || state_ != State::WAITING) {
         return false;

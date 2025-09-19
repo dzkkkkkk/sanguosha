@@ -17,16 +17,18 @@ class RoomManager;
 }
 }
 
-// 前向声明Server
+// 前向声明Server - 添加正确的命名空间
+namespace Sanguosha {
 namespace Network {
-    class Server;
+class Server;
+}
 }
 
 namespace sanguosha {
 
 class GameInstance {
 public:
-    // 修改构造函数，增加Server引用
+    // 修改构造函数，使用正确的前向声明
     explicit GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager, Sanguosha::Network::Server& server);
 
     // 开始1v1游戏
@@ -54,7 +56,7 @@ private:
 
     uint32_t roomId_;
     Sanguosha::Room::RoomManager& roomManager_; // 添加RoomManager引用
-    Sanguosha::Network::Server& server_; // 添加Server的引用
+    Sanguosha::Network::Server& server_; // 使用正确的前向声明
     std::unordered_map<uint32_t, PlayerState> playerStates_;
     uint32_t currentPlayer_;
     bool gameOver_;

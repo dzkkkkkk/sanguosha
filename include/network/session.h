@@ -3,9 +3,10 @@
 #include <memory>
 #include "sanguosha.pb.h"
 
+// 修改前向声明
 namespace Sanguosha {
 namespace Network {
-class Server;
+class Server; // 保持前向声明
 }
 }
 
@@ -37,7 +38,7 @@ private:
     static constexpr int HEARTBEAT_INTERVAL = 30;
     static constexpr int HEARTBEAT_TIMEOUT = 60;
 
-    Server& server_;
+    Server& server_; // 使用前向声明的Server类型
 };
 
 } // namespace Network

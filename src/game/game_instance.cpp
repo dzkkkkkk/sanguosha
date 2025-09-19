@@ -3,10 +3,11 @@
 #include "room/room_manager.h" // 添加包含
 #include <random>
 #include <algorithm>
+#include "network/server.h" // 添加server.h包含
 
 namespace sanguosha {
 
-// 修改构造函数初始化列表
+// 修改构造函数初始化列表 - 使用正确的前向声明
 GameInstance::GameInstance(uint32_t roomId, Sanguosha::Room::RoomManager& roomManager, Sanguosha::Network::Server& server)
     : roomId_(roomId), roomManager_(roomManager), server_(server), currentPlayer_(0), gameOver_(false) {
     // 初始化随机数生成器

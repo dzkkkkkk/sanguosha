@@ -14,7 +14,7 @@ namespace Room {
     class Room; // 前向声明Room类
 }
 namespace Network {
-    class Server;
+    class Server; // 添加Server的前向声明
 }
 }
 
@@ -36,9 +36,9 @@ public:
     
     void broadcastMessage(uint32_t roomId, sanguosha::MessageType type, 
                          const google::protobuf::Message& message, 
-                         Network::Server& server);
+                         Sanguosha::Network::Server& server); // 使用完整命名空间
     
-    void setServer(Network::Server& server);
+    void setServer(Sanguosha::Network::Server& server); // 使用完整命名空间
 
 private:
     RoomManager();
@@ -53,7 +53,7 @@ private:
     
     static boost::asio::io_context dummy_io_context_;
     
-    Network::Server* serverPtr_ = nullptr;
+    Sanguosha::Network::Server* serverPtr_ = nullptr; // 使用完整命名空间
 };
 
 } // namespace Room

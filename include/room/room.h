@@ -11,7 +11,7 @@ namespace Room {
     class RoomManager;
 }
 namespace Network {
-    class Server;
+    class Server; // 添加Server的前向声明
 }
 }
 
@@ -31,7 +31,7 @@ public:
     bool addPlayer(uint32_t playerId);
     bool removePlayer(uint32_t playerId);
     
-    bool startGame(RoomManager& roomManager, Network::Server& server);
+    bool startGame(RoomManager& roomManager, Sanguosha::Network::Server& server); // 使用完整命名空间
     
     uint32_t playerCount() const;
     uint32_t id() const;
