@@ -13,6 +13,8 @@ enum MessageType {
   GAME_ACTION = 6;          // 新增：游戏操作
   GAME_STATE = 7;           // 新增：游戏状态
   GAME_START = 8;           // 新增：游戏开始
+  GAME_OVER = 10;           // 新增：游戏结束
+  GAME_STATE_REQUEST = 11;  // 添加游戏状态请求
 }
 
 // 登录请求
@@ -68,6 +70,14 @@ enum CardType {
   CARD_HEAL = 3;     // 桃
 }
 
+// 添加游戏阶段枚举
+enum GamePhase {
+  PHASE_UNKNOWN = 0;
+  DRAW_PHASE = 1;
+  PLAY_PHASE = 2;
+  DISCARD_PHASE = 3;
+}
+
 // 游戏操作类型
 enum ActionType {
   ACTION_PLAY_CARD = 0;
@@ -94,7 +104,8 @@ message PlayerState {
 message GameState {
   uint32 current_player = 1;
   repeated PlayerState players = 2;
-  uint32 phase = 3;  // 回合阶段
+  GamePhase phase = 3;  // 修改为枚举类型
+  string game_log = 4;  // 添加游戏日志字段
 }
 
 // 游戏开始通知
@@ -115,5 +126,11 @@ message GameMessage {
     GameAction game_action = 7;    // 新增
     GameState game_state = 8;     // 新增
     GameStart game_start = 9;     // 新增
+    GameOver game_over = 10;     // 新增
   }
+}
+
+// 游戏结束通知
+message GameOver {
+  uint32 winner_id = 1;
 }
