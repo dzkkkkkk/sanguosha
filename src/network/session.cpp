@@ -73,9 +73,11 @@ void Session::doReadBody() {
     auto self(shared_from_this());
     boost::asio::async_read(socket_,
         boost::asio::buffer(body_buffer_, expected_body_size_),
-        [this, self](boost::system::error_code ec, size_t) {
+        [this, self](boost::system::error_code ec, size_t bytes_transferred) {  // 使用 bytes_transferred 而不是 bytes_read
             if (ec) {
-                std::cerr << "Body read error: " << ec.message() << std::endl;
+                std::cerr << "Body read error: " << ec.message() 
+                          << ", expected: " << expected_body_size_
+                          << ", transferred: " << bytes_transferred << std::endl;  // 使用 bytes_transferred
                 return;
             }
             
@@ -86,10 +88,11 @@ void Session::doReadBody() {
                 // 根据消息类型处理
                 switch (msg.type()) {
                     case sanguosha::LOGIN_REQUEST:
+                        std::cout << "Processing login request" << std::endl;
                         handleLogin(msg.login_request());
                         break;
                     case sanguosha::HEARTBEAT:
-                        handleHeartbeat(boost::system::error_code());
+                        handleHeartbeat(ec);
                         break;
                     case sanguosha::ROOM_REQUEST:
                         handleRoomRequest(msg.room_request());
@@ -101,7 +104,9 @@ void Session::doReadBody() {
                 // 继续读取下一条消息
                 doReadHeader();
             } catch (const std::exception& e) {
-                std::cerr << "Decode error: " << e.what() << std::endl;
+                std::cerr << "Decode error: " << e.what() 
+                          << ", buffer size: " << body_buffer_.size()
+                          << ", expected size: " << expected_body_size_ << std::endl;
             }
         });
 }
@@ -133,16 +138,19 @@ void Session::handleHeartbeat(const boost::system::error_code& ec) {
 }
 
 void Session::handleLogin(const sanguosha::LoginRequest& login) {
-    std::cout << "Login: " << login.username() << std::endl;
+    std::cout << "Login attempt: " << login.username() << std::endl;
     
     sanguosha::GameMessage response;
     response.set_type(sanguosha::LOGIN_RESPONSE);
     auto* login_res = response.mutable_login_response();
     
-    // 简化登录：直接分配用户ID
-    playerId_ = 1000 + rand() % 9000; // 随机生成用户ID
+    // 简化登录：允许任何用户名登录，分配随机用户ID
+    // 在实际应用中，这里应该验证用户名和密码
+    playerId_ = 1000 + (rand() % 9000);
     login_res->set_success(true);
     login_res->set_user_id(playerId_);
+    
+    std::cout << "Login successful, user ID: " << playerId_ << std::endl;
     
     // 注册会话到服务器
     server_.registerSession(playerId_, shared_from_this());
