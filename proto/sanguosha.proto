@@ -15,6 +15,8 @@ enum MessageType {
   GAME_START = 8;           // 新增：游戏开始
   GAME_OVER = 10;           // 新增：游戏结束
   GAME_STATE_REQUEST = 11;  // 添加游戏状态请求
+  ROOM_LIST_REQUEST = 12;
+  ROOM_LIST_RESPONSE = 13;
 }
 
 // 登录请求
@@ -43,10 +45,18 @@ enum RoomAction {
   START_GAME = 3;
 }
 
+enum RoomStatus {
+  WAITING = 0;
+  PLAYING = 1;
+}
+
 // 房间信息
 message RoomInfo {
   uint32 room_id = 1;
   repeated uint32 players = 2;  // 玩家ID列表
+  uint32 current_players = 3;   // 当前玩家数量
+  uint32 max_players = 4;       // 最大玩家数量
+  RoomStatus status = 5;        // 房间状态
 }
 
 // 房间请求
@@ -60,6 +70,10 @@ message RoomResponse {
   bool success = 1;
   string error_message = 2;
   RoomInfo room_info = 3;
+}
+
+message RoomListResponse {
+  repeated RoomInfo rooms = 1;
 }
 
 // 卡牌类型
@@ -127,6 +141,7 @@ message GameMessage {
     GameState game_state = 8;     // 新增
     GameStart game_start = 9;     // 新增
     GameOver game_over = 10;     // 新增
+    RoomListResponse room_list_response = 14; // 添加这行，使用新的字段编号
   }
 }
 

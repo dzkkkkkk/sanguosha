@@ -39,7 +39,7 @@ namespace protobuf_sanguosha_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[12];
+  static const ::google::protobuf::internal::ParseTable schema[13];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -77,6 +77,9 @@ extern PlayerStateDefaultTypeInternal _PlayerState_default_instance_;
 class RoomInfo;
 class RoomInfoDefaultTypeInternal;
 extern RoomInfoDefaultTypeInternal _RoomInfo_default_instance_;
+class RoomListResponse;
+class RoomListResponseDefaultTypeInternal;
+extern RoomListResponseDefaultTypeInternal _RoomListResponse_default_instance_;
 class RoomRequest;
 class RoomRequestDefaultTypeInternal;
 extern RoomRequestDefaultTypeInternal _RoomRequest_default_instance_;
@@ -96,6 +99,7 @@ template<> ::sanguosha::LoginRequest* Arena::CreateMaybeMessage<::sanguosha::Log
 template<> ::sanguosha::LoginResponse* Arena::CreateMaybeMessage<::sanguosha::LoginResponse>(Arena*);
 template<> ::sanguosha::PlayerState* Arena::CreateMaybeMessage<::sanguosha::PlayerState>(Arena*);
 template<> ::sanguosha::RoomInfo* Arena::CreateMaybeMessage<::sanguosha::RoomInfo>(Arena*);
+template<> ::sanguosha::RoomListResponse* Arena::CreateMaybeMessage<::sanguosha::RoomListResponse>(Arena*);
 template<> ::sanguosha::RoomRequest* Arena::CreateMaybeMessage<::sanguosha::RoomRequest>(Arena*);
 template<> ::sanguosha::RoomResponse* Arena::CreateMaybeMessage<::sanguosha::RoomResponse>(Arena*);
 }  // namespace protobuf
@@ -114,12 +118,14 @@ enum MessageType {
   GAME_START = 8,
   GAME_OVER = 10,
   GAME_STATE_REQUEST = 11,
+  ROOM_LIST_REQUEST = 12,
+  ROOM_LIST_RESPONSE = 13,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   MessageType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool MessageType_IsValid(int value);
 const MessageType MessageType_MIN = UNKNOWN;
-const MessageType MessageType_MAX = GAME_STATE_REQUEST;
+const MessageType MessageType_MAX = ROOM_LIST_RESPONSE;
 const int MessageType_ARRAYSIZE = MessageType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MessageType_descriptor();
@@ -154,6 +160,27 @@ inline bool RoomAction_Parse(
     const ::std::string& name, RoomAction* value) {
   return ::google::protobuf::internal::ParseNamedEnum<RoomAction>(
     RoomAction_descriptor(), name, value);
+}
+enum RoomStatus {
+  WAITING = 0,
+  PLAYING = 1,
+  RoomStatus_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  RoomStatus_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool RoomStatus_IsValid(int value);
+const RoomStatus RoomStatus_MIN = WAITING;
+const RoomStatus RoomStatus_MAX = PLAYING;
+const int RoomStatus_ARRAYSIZE = RoomStatus_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* RoomStatus_descriptor();
+inline const ::std::string& RoomStatus_Name(RoomStatus value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    RoomStatus_descriptor(), value);
+}
+inline bool RoomStatus_Parse(
+    const ::std::string& name, RoomStatus* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<RoomStatus>(
+    RoomStatus_descriptor(), name, value);
 }
 enum CardType {
   CARD_UNKNOWN = 0,
@@ -683,6 +710,24 @@ class RoomInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::uint32 room_id() const;
   void set_room_id(::google::protobuf::uint32 value);
 
+  // uint32 current_players = 3;
+  void clear_current_players();
+  static const int kCurrentPlayersFieldNumber = 3;
+  ::google::protobuf::uint32 current_players() const;
+  void set_current_players(::google::protobuf::uint32 value);
+
+  // uint32 max_players = 4;
+  void clear_max_players();
+  static const int kMaxPlayersFieldNumber = 4;
+  ::google::protobuf::uint32 max_players() const;
+  void set_max_players(::google::protobuf::uint32 value);
+
+  // .sanguosha.RoomStatus status = 5;
+  void clear_status();
+  static const int kStatusFieldNumber = 5;
+  ::sanguosha::RoomStatus status() const;
+  void set_status(::sanguosha::RoomStatus value);
+
   // @@protoc_insertion_point(class_scope:sanguosha.RoomInfo)
  private:
 
@@ -690,6 +735,9 @@ class RoomInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > players_;
   mutable int _players_cached_byte_size_;
   ::google::protobuf::uint32 room_id_;
+  ::google::protobuf::uint32 current_players_;
+  ::google::protobuf::uint32 max_players_;
+  int status_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_sanguosha_2eproto::TableStruct;
 };
@@ -936,6 +984,115 @@ class RoomResponse : public ::google::protobuf::Message /* @@protoc_insertion_po
 };
 // -------------------------------------------------------------------
 
+class RoomListResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:sanguosha.RoomListResponse) */ {
+ public:
+  RoomListResponse();
+  virtual ~RoomListResponse();
+
+  RoomListResponse(const RoomListResponse& from);
+
+  inline RoomListResponse& operator=(const RoomListResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  RoomListResponse(RoomListResponse&& from) noexcept
+    : RoomListResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline RoomListResponse& operator=(RoomListResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const RoomListResponse& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const RoomListResponse* internal_default_instance() {
+    return reinterpret_cast<const RoomListResponse*>(
+               &_RoomListResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    6;
+
+  void Swap(RoomListResponse* other);
+  friend void swap(RoomListResponse& a, RoomListResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline RoomListResponse* New() const final {
+    return CreateMaybeMessage<RoomListResponse>(NULL);
+  }
+
+  RoomListResponse* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<RoomListResponse>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const RoomListResponse& from);
+  void MergeFrom(const RoomListResponse& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(RoomListResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .sanguosha.RoomInfo rooms = 1;
+  int rooms_size() const;
+  void clear_rooms();
+  static const int kRoomsFieldNumber = 1;
+  ::sanguosha::RoomInfo* mutable_rooms(int index);
+  ::google::protobuf::RepeatedPtrField< ::sanguosha::RoomInfo >*
+      mutable_rooms();
+  const ::sanguosha::RoomInfo& rooms(int index) const;
+  ::sanguosha::RoomInfo* add_rooms();
+  const ::google::protobuf::RepeatedPtrField< ::sanguosha::RoomInfo >&
+      rooms() const;
+
+  // @@protoc_insertion_point(class_scope:sanguosha.RoomListResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::sanguosha::RoomInfo > rooms_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_sanguosha_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class GameAction : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:sanguosha.GameAction) */ {
  public:
   GameAction();
@@ -971,7 +1128,7 @@ class GameAction : public ::google::protobuf::Message /* @@protoc_insertion_poin
                &_GameAction_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   void Swap(GameAction* other);
   friend void swap(GameAction& a, GameAction& b) {
@@ -1088,7 +1245,7 @@ class PlayerState : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_PlayerState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   void Swap(PlayerState* other);
   friend void swap(PlayerState& a, PlayerState& b) {
@@ -1234,7 +1391,7 @@ class GameState : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_GameState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   void Swap(GameState* other);
   friend void swap(GameState& a, GameState& b) {
@@ -1372,7 +1529,7 @@ class GameStart : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_GameStart_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   void Swap(GameStart* other);
   friend void swap(GameStart& a, GameStart& b) {
@@ -1493,6 +1650,7 @@ class GameMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
     kGameState = 8,
     kGameStart = 9,
     kGameOver = 10,
+    kRoomListResponse = 14,
     CONTENT_NOT_SET = 0,
   };
 
@@ -1502,7 +1660,7 @@ class GameMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_GameMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   void Swap(GameMessage* other);
   friend void swap(GameMessage& a, GameMessage& b) {
@@ -1668,6 +1826,18 @@ class GameMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::sanguosha::GameOver* mutable_game_over();
   void set_allocated_game_over(::sanguosha::GameOver* game_over);
 
+  // .sanguosha.RoomListResponse room_list_response = 14;
+  bool has_room_list_response() const;
+  void clear_room_list_response();
+  static const int kRoomListResponseFieldNumber = 14;
+  private:
+  const ::sanguosha::RoomListResponse& _internal_room_list_response() const;
+  public:
+  const ::sanguosha::RoomListResponse& room_list_response() const;
+  ::sanguosha::RoomListResponse* release_room_list_response();
+  ::sanguosha::RoomListResponse* mutable_room_list_response();
+  void set_allocated_room_list_response(::sanguosha::RoomListResponse* room_list_response);
+
   void clear_content();
   ContentCase content_case() const;
   // @@protoc_insertion_point(class_scope:sanguosha.GameMessage)
@@ -1681,6 +1851,7 @@ class GameMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
   void set_has_game_state();
   void set_has_game_start();
   void set_has_game_over();
+  void set_has_room_list_response();
 
   inline bool has_content() const;
   inline void clear_has_content();
@@ -1698,6 +1869,7 @@ class GameMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
     ::sanguosha::GameState* game_state_;
     ::sanguosha::GameStart* game_start_;
     ::sanguosha::GameOver* game_over_;
+    ::sanguosha::RoomListResponse* room_list_response_;
   } content_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -1741,7 +1913,7 @@ class GameOver : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_GameOver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   void Swap(GameOver* other);
   friend void swap(GameOver& a, GameOver& b) {
@@ -2075,6 +2247,48 @@ RoomInfo::mutable_players() {
   return &players_;
 }
 
+// uint32 current_players = 3;
+inline void RoomInfo::clear_current_players() {
+  current_players_ = 0u;
+}
+inline ::google::protobuf::uint32 RoomInfo::current_players() const {
+  // @@protoc_insertion_point(field_get:sanguosha.RoomInfo.current_players)
+  return current_players_;
+}
+inline void RoomInfo::set_current_players(::google::protobuf::uint32 value) {
+  
+  current_players_ = value;
+  // @@protoc_insertion_point(field_set:sanguosha.RoomInfo.current_players)
+}
+
+// uint32 max_players = 4;
+inline void RoomInfo::clear_max_players() {
+  max_players_ = 0u;
+}
+inline ::google::protobuf::uint32 RoomInfo::max_players() const {
+  // @@protoc_insertion_point(field_get:sanguosha.RoomInfo.max_players)
+  return max_players_;
+}
+inline void RoomInfo::set_max_players(::google::protobuf::uint32 value) {
+  
+  max_players_ = value;
+  // @@protoc_insertion_point(field_set:sanguosha.RoomInfo.max_players)
+}
+
+// .sanguosha.RoomStatus status = 5;
+inline void RoomInfo::clear_status() {
+  status_ = 0;
+}
+inline ::sanguosha::RoomStatus RoomInfo::status() const {
+  // @@protoc_insertion_point(field_get:sanguosha.RoomInfo.status)
+  return static_cast< ::sanguosha::RoomStatus >(status_);
+}
+inline void RoomInfo::set_status(::sanguosha::RoomStatus value) {
+  
+  status_ = value;
+  // @@protoc_insertion_point(field_set:sanguosha.RoomInfo.status)
+}
+
 // -------------------------------------------------------------------
 
 // RoomRequest
@@ -2230,6 +2444,40 @@ inline void RoomResponse::set_allocated_room_info(::sanguosha::RoomInfo* room_in
   }
   room_info_ = room_info;
   // @@protoc_insertion_point(field_set_allocated:sanguosha.RoomResponse.room_info)
+}
+
+// -------------------------------------------------------------------
+
+// RoomListResponse
+
+// repeated .sanguosha.RoomInfo rooms = 1;
+inline int RoomListResponse::rooms_size() const {
+  return rooms_.size();
+}
+inline void RoomListResponse::clear_rooms() {
+  rooms_.Clear();
+}
+inline ::sanguosha::RoomInfo* RoomListResponse::mutable_rooms(int index) {
+  // @@protoc_insertion_point(field_mutable:sanguosha.RoomListResponse.rooms)
+  return rooms_.Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField< ::sanguosha::RoomInfo >*
+RoomListResponse::mutable_rooms() {
+  // @@protoc_insertion_point(field_mutable_list:sanguosha.RoomListResponse.rooms)
+  return &rooms_;
+}
+inline const ::sanguosha::RoomInfo& RoomListResponse::rooms(int index) const {
+  // @@protoc_insertion_point(field_get:sanguosha.RoomListResponse.rooms)
+  return rooms_.Get(index);
+}
+inline ::sanguosha::RoomInfo* RoomListResponse::add_rooms() {
+  // @@protoc_insertion_point(field_add:sanguosha.RoomListResponse.rooms)
+  return rooms_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::sanguosha::RoomInfo >&
+RoomListResponse::rooms() const {
+  // @@protoc_insertion_point(field_list:sanguosha.RoomListResponse.rooms)
+  return rooms_;
 }
 
 // -------------------------------------------------------------------
@@ -2984,6 +3232,50 @@ inline ::sanguosha::GameOver* GameMessage::mutable_game_over() {
   return content_.game_over_;
 }
 
+// .sanguosha.RoomListResponse room_list_response = 14;
+inline bool GameMessage::has_room_list_response() const {
+  return content_case() == kRoomListResponse;
+}
+inline void GameMessage::set_has_room_list_response() {
+  _oneof_case_[0] = kRoomListResponse;
+}
+inline void GameMessage::clear_room_list_response() {
+  if (has_room_list_response()) {
+    delete content_.room_list_response_;
+    clear_has_content();
+  }
+}
+inline const ::sanguosha::RoomListResponse& GameMessage::_internal_room_list_response() const {
+  return *content_.room_list_response_;
+}
+inline ::sanguosha::RoomListResponse* GameMessage::release_room_list_response() {
+  // @@protoc_insertion_point(field_release:sanguosha.GameMessage.room_list_response)
+  if (has_room_list_response()) {
+    clear_has_content();
+      ::sanguosha::RoomListResponse* temp = content_.room_list_response_;
+    content_.room_list_response_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::sanguosha::RoomListResponse& GameMessage::room_list_response() const {
+  // @@protoc_insertion_point(field_get:sanguosha.GameMessage.room_list_response)
+  return has_room_list_response()
+      ? *content_.room_list_response_
+      : *reinterpret_cast< ::sanguosha::RoomListResponse*>(&::sanguosha::_RoomListResponse_default_instance_);
+}
+inline ::sanguosha::RoomListResponse* GameMessage::mutable_room_list_response() {
+  if (!has_room_list_response()) {
+    clear_content();
+    set_has_room_list_response();
+    content_.room_list_response_ = CreateMaybeMessage< ::sanguosha::RoomListResponse >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:sanguosha.GameMessage.room_list_response)
+  return content_.room_list_response_;
+}
+
 inline bool GameMessage::has_content() const {
   return content_case() != CONTENT_NOT_SET;
 }
@@ -3036,6 +3328,8 @@ inline void GameOver::set_winner_id(::google::protobuf::uint32 value) {
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -3053,6 +3347,11 @@ template <> struct is_proto_enum< ::sanguosha::RoomAction> : ::std::true_type {}
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::sanguosha::RoomAction>() {
   return ::sanguosha::RoomAction_descriptor();
+}
+template <> struct is_proto_enum< ::sanguosha::RoomStatus> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::sanguosha::RoomStatus>() {
+  return ::sanguosha::RoomStatus_descriptor();
 }
 template <> struct is_proto_enum< ::sanguosha::CardType> : ::std::true_type {};
 template <>
