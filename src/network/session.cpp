@@ -111,9 +111,6 @@ void Session::doReadBody() {
                     case sanguosha::ROOM_REQUEST:
                         handleRoomRequest(msg.room_request());
                         break;
-                    case sanguosha::GAME_ACTION:
-                        handleGameAction(msg.game_action());
-                        break;
                     default:
                         std::cerr << "Unknown message type: " << msg.type() << std::endl;
                 }
