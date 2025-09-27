@@ -40,6 +40,9 @@ public:
     
     void setServer(Sanguosha::Network::Server& server); // 使用完整命名空间
 
+    std::mutex& getMutex() { return mutex_; }
+    const std::unordered_map<uint32_t, std::shared_ptr<Room>>& getRooms() const { return rooms_; }
+
 private:
     RoomManager();
     ~RoomManager();

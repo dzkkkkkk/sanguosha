@@ -28,6 +28,7 @@ private:
     void handleHeartbeat(const boost::system::error_code& ec);
     void startHeartbeat();
     void handleRoomRequest(const sanguosha::RoomRequest& request);
+    void handleRoomListRequest();
     
     boost::asio::ip::tcp::socket socket_;
     boost::asio::steady_timer heartbeat_timer_;

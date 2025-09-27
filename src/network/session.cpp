@@ -111,6 +111,9 @@ void Session::doReadBody() {
                     case sanguosha::ROOM_REQUEST:
                         handleRoomRequest(msg.room_request());
                         break;
+                    case sanguosha::ROOM_LIST_REQUEST:
+                        handleRoomListRequest();
+                        break;
                     default:
                         std::cerr << "Unknown message type: " << msg.type() << std::endl;
                 }
@@ -256,6 +259,34 @@ void Session::send(const sanguosha::GameMessage& msg) {
                   << static_cast<int>(buffer[i]) << " ";
     }
     std::cout << std::dec << "..." << std::endl;
+}
+
+void Session::handleRoomListRequest() {
+    auto& roomMgr = Sanguosha::Room::RoomManager::Instance();
+    
+    sanguosha::GameMessage response;
+    response.set_type(sanguosha::ROOM_LIST_RESPONSE);
+    auto* roomListRes = response.mutable_room_list_response();
+    
+    // 获取所有房间信息
+    std::lock_guard<std::mutex> lock(roomMgr.getMutex());
+    for (const auto& [roomId, room] : roomMgr.getRooms()) {
+        sanguosha::RoomInfo* roomInfo = roomListRes->add_rooms();
+        roomInfo->set_room_id(room->id());
+        roomInfo->set_current_players(room->playerCount());
+        roomInfo->set_max_players(2);
+        
+        // 修复：使用完全限定的枚举名称
+        roomInfo->set_status(room->state() == Sanguosha::Room::Room::State::WAITING ? 
+                           sanguosha::WAITING : sanguosha::PLAYING);
+        
+        const auto& players = room->getPlayers();
+        for (uint32_t playerId : players) {
+            roomInfo->add_players(playerId);
+        }
+    }
+    
+    send(response);
 }
 
 } // namespace Network
