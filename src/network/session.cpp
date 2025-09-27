@@ -110,6 +110,13 @@ void Session::doReadBody() {
                           << ", expected size: " << expected_body_size_ << std::endl;
             }
         });
+
+    // 在 session.cpp 的 doReadBody 中添加
+    std::cout << "Received body data (hex): ";
+    for (auto byte : body_buffer_) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
+}
+std::cout << std::dec << std::endl;
 }
 
 void Session::handleHeartbeat(const boost::system::error_code& ec) {
