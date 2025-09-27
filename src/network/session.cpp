@@ -75,17 +75,29 @@ void Session::doReadBody() {
     auto self(shared_from_this());
     boost::asio::async_read(socket_,
         boost::asio::buffer(body_buffer_, expected_body_size_),
-        [this, self](boost::system::error_code ec, size_t bytes_transferred) {  // 使用 bytes_transferred 而不是 bytes_read
+        [this, self](boost::system::error_code ec, size_t bytes_transferred) {
             if (ec) {
                 std::cerr << "Body read error: " << ec.message() 
                           << ", expected: " << expected_body_size_
-                          << ", transferred: " << bytes_transferred << std::endl;  // 使用 bytes_transferred
+                          << ", transferred: " << bytes_transferred << std::endl;
                 return;
             }
             
             try {
-                // 解析消息
-                auto msg = MessageCodec::decode(body_buffer_);
+                // 直接解析消息体，不使用MessageCodec::decode
+                sanguosha::GameMessage msg;
+                if (!msg.ParseFromArray(body_buffer_.data(), body_buffer_.size())) {
+                    std::cerr << "Parse message body failed. Body size: " 
+                              << body_buffer_.size() << std::endl;
+                    // 打印前20字节的十六进制用于调试
+                    std::cerr << "First 20 bytes (hex): ";
+                    for (size_t i = 0; i < std::min(body_buffer_.size(), size_t(20)); ++i) {
+                        std::cerr << std::hex << std::setw(2) << std::setfill('0') 
+                                  << static_cast<int>(body_buffer_[i]) << " ";
+                    }
+                    std::cerr << std::dec << std::endl;
+                    return;
+                }
                 
                 // 根据消息类型处理
                 switch (msg.type()) {
@@ -99,6 +111,9 @@ void Session::doReadBody() {
                     case sanguosha::ROOM_REQUEST:
                         handleRoomRequest(msg.room_request());
                         break;
+                    case sanguosha::GAME_ACTION:
+                        handleGameAction(msg.game_action());
+                        break;
                     default:
                         std::cerr << "Unknown message type: " << msg.type() << std::endl;
                 }
@@ -106,18 +121,18 @@ void Session::doReadBody() {
                 // 继续读取下一条消息
                 doReadHeader();
             } catch (const std::exception& e) {
-                std::cerr << "Decode error: " << e.what() 
+                std::cerr << "Process message error: " << e.what() 
                           << ", buffer size: " << body_buffer_.size()
                           << ", expected size: " << expected_body_size_ << std::endl;
             }
         });
 
-    // 在 session.cpp 的 doReadBody 中添加
+    // 调试信息：打印接收到的数据（十六进制）
     std::cout << "Received body data (hex): ";
     for (auto byte : body_buffer_) {
         std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << " ";
-}
-std::cout << std::dec << std::endl;
+    }
+    std::cout << std::dec << std::endl;
 }
 
 void Session::handleHeartbeat(const boost::system::error_code& ec) {
@@ -212,7 +227,23 @@ void Session::handleRoomRequest(const sanguosha::RoomRequest& request) {
 }
 
 void Session::send(const sanguosha::GameMessage& msg) {
-    auto buffer = MessageCodec::encode(msg);
+    // 计算消息体大小
+    size_t body_size = msg.ByteSizeLong();
+    size_t total_size = 4 + body_size;
+    
+    std::vector<char> buffer(total_size);
+    
+    // 写入消息头（长度）- 使用网络字节序
+    uint32_t net_size = htonl(static_cast<uint32_t>(body_size));
+    memcpy(buffer.data(), &net_size, 4);
+    
+    // 写入消息体
+    if (!msg.SerializeToArray(buffer.data() + 4, body_size)) {
+        std::cerr << "Failed to serialize message" << std::endl;
+        return;
+    }
+    
+    // 发送完整消息
     boost::asio::async_write(socket_, boost::asio::buffer(buffer),
         [self = shared_from_this()](boost::system::error_code ec, size_t) {
             if (ec) {
@@ -220,6 +251,14 @@ void Session::send(const sanguosha::GameMessage& msg) {
                 // 这里可以添加重连或关闭连接逻辑
             }
         });
+    
+    // 调试信息：打印发送的数据（十六进制）
+    std::cout << "Sent message data (hex): ";
+    for (size_t i = 0; i < std::min(buffer.size(), size_t(20)); ++i) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') 
+                  << static_cast<int>(buffer[i]) << " ";
+    }
+    std::cout << std::dec << "..." << std::endl;
 }
 
 } // namespace Network
