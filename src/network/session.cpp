@@ -6,6 +6,7 @@
 #include <ctime>
 #include "room/room.h" // 添加room.h包含
 #include "network/server.h" // 添加server.h包含
+#include <iomanip>
 
 using boost::asio::ip::tcp;
 using boost::asio::steady_timer;
