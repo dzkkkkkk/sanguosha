@@ -59,9 +59,10 @@ void Session::doReadHeader() {
                 return;
             }
             
-            // 解析头部大小
-            memcpy(&expected_body_size_, header_buffer_.data(), sizeof(uint32_t));
-            expected_body_size_ = ntohl(expected_body_size_);
+            // 修复字节序处理
+            uint32_t net_size;
+            memcpy(&net_size, header_buffer_.data(), sizeof(uint32_t));
+            expected_body_size_ = ntohl(net_size); // 正确转换网络字节序到主机字节序
             
             // 准备读取消息体
             body_buffer_.resize(expected_body_size_);
