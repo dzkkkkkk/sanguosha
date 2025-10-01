@@ -79,11 +79,11 @@ bool RoomManager::joinRoom(uint32_t roomId, uint32_t playerId) {
     // 在锁外开始游戏，避免死锁
     if (shouldStartGame && serverPtr_ != nullptr) {
         if (room->startGame(*this, *serverPtr_)) {
-            room_res->set_success(true);
-            room_res->mutable_room_info()->set_room_id(roomId); // 确保设置正确的roomId
+            // 修复：移除对room_res的引用，或者添加正确的实现
+            // 如果需要发送响应，应该通过其他方式实现
+            std::cout << "Game started successfully in room " << roomId << std::endl;
         } else {
-            room_res->set_success(false);
-            room_res->set_error_message("Start game failed");
+            std::cerr << "Start game failed in room " << roomId << std::endl;
         }
     }
     
