@@ -116,10 +116,10 @@ enum MessageType {
   GAME_ACTION = 6,
   GAME_STATE = 7,
   GAME_START = 8,
-  GAME_OVER = 10,
-  GAME_STATE_REQUEST = 11,
-  ROOM_LIST_REQUEST = 12,
-  ROOM_LIST_RESPONSE = 13,
+  GAME_OVER = 9,
+  GAME_STATE_REQUEST = 10,
+  ROOM_LIST_REQUEST = 11,
+  ROOM_LIST_RESPONSE = 12,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   MessageType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };

@@ -530,9 +530,9 @@ void AddDescriptorsImpl() {
       "\021\n\rLOGIN_REQUEST\020\001\022\022\n\016LOGIN_RESPONSE\020\002\022\r"
       "\n\tHEARTBEAT\020\003\022\020\n\014ROOM_REQUEST\020\004\022\021\n\rROOM_"
       "RESPONSE\020\005\022\017\n\013GAME_ACTION\020\006\022\016\n\nGAME_STAT"
-      "E\020\007\022\016\n\nGAME_START\020\010\022\r\n\tGAME_OVER\020\n\022\026\n\022GA"
-      "ME_STATE_REQUEST\020\013\022\025\n\021ROOM_LIST_REQUEST\020"
-      "\014\022\026\n\022ROOM_LIST_RESPONSE\020\r*L\n\nRoomAction\022"
+      "E\020\007\022\016\n\nGAME_START\020\010\022\r\n\tGAME_OVER\020\t\022\026\n\022GA"
+      "ME_STATE_REQUEST\020\n\022\025\n\021ROOM_LIST_REQUEST\020"
+      "\013\022\026\n\022ROOM_LIST_RESPONSE\020\014*L\n\nRoomAction\022"
       "\017\n\013CREATE_ROOM\020\000\022\r\n\tJOIN_ROOM\020\001\022\016\n\nLEAVE"
       "_ROOM\020\002\022\016\n\nSTART_GAME\020\003*&\n\nRoomStatus\022\013\n"
       "\007WAITING\020\000\022\013\n\007PLAYING\020\001*M\n\010CardType\022\020\n\014C"
@@ -576,10 +576,10 @@ bool MessageType_IsValid(int value) {
     case 6:
     case 7:
     case 8:
+    case 9:
     case 10:
     case 11:
     case 12:
-    case 13:
       return true;
     default:
       return false;
