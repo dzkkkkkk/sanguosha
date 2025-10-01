@@ -10,13 +10,13 @@ enum MessageType {
   HEARTBEAT = 3;
   ROOM_REQUEST = 4;
   ROOM_RESPONSE = 5;
-  GAME_ACTION = 6;          // 新增：游戏操作
-  GAME_STATE = 7;           // 新增：游戏状态
-  GAME_START = 8;           // 新增：游戏开始
-  GAME_OVER = 10;           // 新增：游戏结束
-  GAME_STATE_REQUEST = 11;  // 添加游戏状态请求
-  ROOM_LIST_REQUEST = 12;
-  ROOM_LIST_RESPONSE = 13;
+  GAME_ACTION = 6;
+  GAME_STATE = 7;
+  GAME_START = 8;
+  GAME_OVER = 9;           // 修改为9，避免与后面的冲突
+  GAME_STATE_REQUEST = 10;
+  ROOM_LIST_REQUEST = 11;
+  ROOM_LIST_RESPONSE = 12;
 }
 
 // 登录请求
