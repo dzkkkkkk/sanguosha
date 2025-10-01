@@ -78,7 +78,13 @@ bool RoomManager::joinRoom(uint32_t roomId, uint32_t playerId) {
     
     // 在锁外开始游戏，避免死锁
     if (shouldStartGame && serverPtr_ != nullptr) {
-        room->startGame(*this, *serverPtr_);
+        if (room->startGame(*this, *serverPtr_)) {
+            room_res->set_success(true);
+            room_res->mutable_room_info()->set_room_id(roomId); // 确保设置正确的roomId
+        } else {
+            room_res->set_success(false);
+            room_res->set_error_message("Start game failed");
+        }
     }
     
     return true;

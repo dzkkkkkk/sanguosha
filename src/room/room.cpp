@@ -28,6 +28,7 @@ bool Room::removePlayer(uint32_t playerId) {
     return true;
 }
 
+// room.cpp - 修改startGame函数
 bool Room::startGame(RoomManager& roomManager, Sanguosha::Network::Server& server) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (players_.size() != 2 || state_ != State::WAITING) {
@@ -40,11 +41,12 @@ bool Room::startGame(RoomManager& roomManager, Sanguosha::Network::Server& serve
     
     // 广播游戏开始消息
     sanguosha::GameStart gameStartMsg;
-    gameStartMsg.set_room_id(id_);
+    gameStartMsg.set_room_id(id_); // 确保设置正确的房间ID
     for (auto playerId : players_) {
         gameStartMsg.add_player_ids(playerId);
     }
     
+    // 使用正确的消息类型
     roomManager.broadcastMessage(id_, sanguosha::GAME_START, gameStartMsg, server);
     
     return true;
