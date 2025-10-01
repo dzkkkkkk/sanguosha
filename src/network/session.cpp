@@ -251,7 +251,11 @@ void Session::send(const sanguosha::GameMessage& msg) {
                 // 这里可以添加重连或关闭连接逻辑
             }
         });
-    
+    std::cout << "Sending message type: " << msg.type() << std::endl;
+    if (msg.type() == sanguosha::ROOM_RESPONSE) {
+        std::cout << "Room response - success: " << msg.room_response().success() 
+                  << ", room ID: " << msg.room_response().room_info().room_id() << std::endl;
+    }
     // 调试信息：打印发送的数据（十六进制）
     std::cout << "Sent message data (hex): ";
     for (size_t i = 0; i < std::min(buffer.size(), size_t(20)); ++i) {
