@@ -28,7 +28,7 @@ bool Room::removePlayer(uint32_t playerId) {
     return true;
 }
 
-bool Room::startGame(RoomManager& roomManager, Sanguosha::Network::Server& server) { // 使用完整命名空间
+bool Room::startGame(RoomManager& roomManager, Sanguosha::Network::Server& server) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (players_.size() != 2 || state_ != State::WAITING) {
         return false;
@@ -37,6 +37,15 @@ bool Room::startGame(RoomManager& roomManager, Sanguosha::Network::Server& serve
     
     gameInstance_ = std::make_shared<sanguosha::GameInstance>(id_, roomManager, server);
     gameInstance_->startGame(players_);
+    
+    // 广播游戏开始消息
+    sanguosha::GameStart gameStartMsg;
+    gameStartMsg.set_room_id(id_);
+    for (auto playerId : players_) {
+        gameStartMsg.add_player_ids(playerId);
+    }
+    
+    roomManager.broadcastMessage(id_, sanguosha::GAME_START, gameStartMsg, server);
     
     return true;
 }

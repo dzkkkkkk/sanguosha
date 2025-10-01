@@ -50,20 +50,38 @@ uint32_t RoomManager::createRoom(const std::vector<uint32_t>& playerIds) {
 }
 
 bool RoomManager::joinRoom(uint32_t roomId, uint32_t playerId) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto it = rooms_.find(roomId);
-    if (it == rooms_.end()) {
-        return false;
-    }
-    bool success = it->second->addPlayer(playerId);
+    std::shared_ptr<Room> room;
+    bool shouldStartGame = false;
     
-    // 关键：如果加入成功，并且房间人数达到要求，则开始游戏！
-    if (success && it->second->playerCount() == 2) { // 2人游戏
-        if (serverPtr_ != nullptr) { // 确保Server指针已设置
-            it->second->startGame(*this, *serverPtr_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::cout << "Attempting to join room " << roomId << " with player " << playerId << std::endl;
+        
+        auto it = rooms_.find(roomId);
+        if (it == rooms_.end()) {
+            std::cout << "Room not found: " << roomId << std::endl;
+            return false;
         }
+        
+        room = it->second;
+        bool success = room->addPlayer(playerId);
+        std::cout << "Join room result: " << success << std::endl;
+        
+        // 检查是否需要开始游戏
+        if (success && room->playerCount() == 2 && room->state() == Room::State::WAITING) {
+            std::cout << "Room is full, will start game" << std::endl;
+            shouldStartGame = true;
+        }
+        
+        if (!success) return false;
+    } // 释放锁后再开始游戏
+    
+    // 在锁外开始游戏，避免死锁
+    if (shouldStartGame && serverPtr_ != nullptr) {
+        room->startGame(*this, *serverPtr_);
     }
-    return success;
+    
+    return true;
 }
 
 bool RoomManager::leaveRoom(uint32_t roomId, uint32_t playerId) {
@@ -141,35 +159,44 @@ void RoomManager::cleanupRooms() {
 }
 
 void RoomManager::broadcastMessage(uint32_t roomId, sanguosha::MessageType type, const google::protobuf::Message& message, Network::Server& server) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto it = rooms_.find(roomId);
-    if (it != rooms_.end()) {
-        const std::vector<uint32_t>& players = it->second->getPlayers();
-        
-        sanguosha::GameMessage gameMsg;
-        gameMsg.set_type(type);
-        
-        // 根据不同的消息类型，设置对应的字段
-        switch (type) {
-            case sanguosha::GAME_STATE:
-                gameMsg.mutable_game_state()->CopyFrom(dynamic_cast<const sanguosha::GameState&>(message));
-                break;
-            case sanguosha::GAME_START:
-                gameMsg.mutable_game_start()->CopyFrom(dynamic_cast<const sanguosha::GameStart&>(message));
-                break;
-            case sanguosha::ROOM_RESPONSE:
-                gameMsg.mutable_room_response()->CopyFrom(dynamic_cast<const sanguosha::RoomResponse&>(message));
-                break;
-            // ... 处理其他需要的消息类型 ...
-            default:
-                std::cerr << "Unknown message type for broadcast: " << type << std::endl;
-                return;
+    std::vector<uint32_t> players;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = rooms_.find(roomId);
+        if (it == rooms_.end()) {
+            return;
         }
-
-        for (uint32_t playerId : players) {
-            if (auto session = server.getSession(playerId)) {
-                session->send(gameMsg);
+        players = it->second->getPlayers();
+    } // 释放锁后再发送消息
+    
+    sanguosha::GameMessage gameMsg;
+    gameMsg.set_type(type);
+    
+    // 根据不同的消息类型，设置对应的字段
+    switch (type) {
+        case sanguosha::GAME_STATE:
+            if (message.GetTypeName() == "sanguosha.GameState") {
+                gameMsg.mutable_game_state()->CopyFrom(dynamic_cast<const sanguosha::GameState&>(message));
             }
+            break;
+        case sanguosha::GAME_START:
+            if (message.GetTypeName() == "sanguosha.GameStart") {
+                gameMsg.mutable_game_start()->CopyFrom(dynamic_cast<const sanguosha::GameStart&>(message));
+            }
+            break;
+        case sanguosha::ROOM_RESPONSE:
+            if (message.GetTypeName() == "sanguosha.RoomResponse") {
+                gameMsg.mutable_room_response()->CopyFrom(dynamic_cast<const sanguosha::RoomResponse&>(message));
+            }
+            break;
+        default:
+            std::cerr << "Unknown message type for broadcast: " << type << std::endl;
+            return;
+    }
+
+    for (uint32_t playerId : players) {
+        if (auto session = server.getSession(playerId)) {
+            session->send(gameMsg);
         }
     }
 }

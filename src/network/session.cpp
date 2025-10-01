@@ -109,6 +109,7 @@ void Session::doReadBody() {
                         handleHeartbeat(ec);
                         break;
                     case sanguosha::ROOM_REQUEST:
+                        std::cout << "Processing room request" << std::endl;
                         handleRoomRequest(msg.room_request());
                         break;
                     case sanguosha::ROOM_LIST_REQUEST:
@@ -204,12 +205,7 @@ void Session::handleRoomRequest(const sanguosha::RoomRequest& request) {
         case sanguosha::JOIN_ROOM: {
             if (roomMgr.joinRoom(request.room_id(), playerId_)) {
                 room_res->set_success(true);
-                // 检查是否可以开始游戏
-                auto room = roomMgr.getRoom(request.room_id());
-                if (room && room->playerCount() == 2) {
-                    // 修正：传递roomManager和server引用
-                    room->startGame(roomMgr, server_);
-                }
+                // 注意：移除了这里的手动startGame调用，现在由RoomManager自动处理
             } else {
                 room_res->set_success(false);
                 room_res->set_error_message("Join room failed");
