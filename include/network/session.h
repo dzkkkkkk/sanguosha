@@ -29,6 +29,7 @@ private:
     void startHeartbeat();
     void handleRoomRequest(const sanguosha::RoomRequest& request);
     void handleRoomListRequest();
+    void handleGameAction(const sanguosha::GameAction& action);
     
     boost::asio::ip::tcp::socket socket_;
     boost::asio::steady_timer heartbeat_timer_;

@@ -46,9 +46,10 @@ private:
     void dealInitialCards();
     void processTurn(uint32_t playerId);
     void resolveAttack(uint32_t attacker, uint32_t target);
-    void broadcastGameState();
+    void broadcastGameState(const sanguosha::GameState& gameState);
     uint32_t getNextPlayer();
     bool checkGameOver();
+    void handleGameOver();
 
     // 添加必要的成员变量
     std::vector<uint32_t> deck_;

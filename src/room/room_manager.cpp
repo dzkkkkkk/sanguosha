@@ -132,6 +132,17 @@ uint32_t RoomManager::matchPlayers(const std::vector<uint32_t>& playerIds) {
     return createRoom(playerIds);
 }
 
+std::shared_ptr<Room> RoomManager::getRoomByPlayerId(uint32_t playerId) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const auto& [roomId, room] : rooms_) {
+        const auto& players = room->getPlayers();
+        if (std::find(players.begin(), players.end(), playerId) != players.end()) {
+            return room;
+        }
+    }
+    return nullptr;
+}
+
 void RoomManager::setIoContext(boost::asio::io_context& io) {
     io_ = &io;
     

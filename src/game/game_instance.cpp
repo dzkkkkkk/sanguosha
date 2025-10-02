@@ -109,7 +109,7 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
                 auto& playerState = playerStates_[playerId];
                 for (int i = 0; i < playerState.hand_cards_size(); i++) {
                     if (playerState.hand_cards(i) == action.card_id()) {
-                        playerState.mutable_hand_cards()->DeleteSubrange(i, 1);
+                        playerState.mutable_hand_cards()->erase(playerState.hand_cards().begin() + i);
                         break;
                     }
                 }
@@ -124,7 +124,7 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
                     // 从手牌中移除使用的牌
                     for (int i = 0; i < playerState.hand_cards_size(); i++) {
                         if (playerState.hand_cards(i) == action.card_id()) {
-                            playerState.mutable_hand_cards()->DeleteSubrange(i, 1);
+                            playerState.mutable_hand_cards()->erase(playerState.hand_cards().begin() + i);
                             break;
                         }
                     }
@@ -167,7 +167,7 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
         if (targetState.hand_cards(i) == sanguosha::CARD_DEFEND) {
             hasDodge = true;
             // 移除闪
-            targetState.mutable_hand_cards()->DeleteSubrange(i, 1);
+            playerState.mutable_hand_cards()->erase(playerState.hand_cards().begin() + i);
             break;
         }
     }
@@ -215,17 +215,8 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
     }
 }
 
-void GameInstance::broadcastGameState() {
-    GameState state;
-    state.set_current_player(currentPlayer_);
-    
-    for (const auto& pair : playerStates_) {
-        PlayerState* playerState = state.add_players();
-        playerState->CopyFrom(pair.second);
-    }
-    
-    // 调用roomManager的广播方法，并传入server_
-    roomManager_.broadcastMessage(roomId_, sanguosha::GAME_STATE, state, server_);
+void GameInstance::broadcastGameState(const sanguosha::GameState& gameState) {
+    roomManager_.broadcastMessage(roomId_, sanguosha::GAME_STATE, gameState, server_);
 }
 
 uint32_t GameInstance::getNextPlayer() {

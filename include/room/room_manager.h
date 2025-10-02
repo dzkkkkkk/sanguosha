@@ -43,6 +43,8 @@ public:
     std::mutex& getMutex() { return mutex_; }
     const std::unordered_map<uint32_t, std::shared_ptr<Room>>& getRooms() const { return rooms_; }
 
+    std::shared_ptr<Room> getRoomByPlayerId(uint32_t playerId);
+
 private:
     RoomManager();
     ~RoomManager();

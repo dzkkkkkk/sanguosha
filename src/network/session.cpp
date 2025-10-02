@@ -323,17 +323,7 @@ void Session::handleGameAction(const sanguosha::GameAction& action) {
     }
 }
 
-// 在 RoomManager 类中添加
-std::shared_ptr<Room> RoomManager::getRoomByPlayerId(uint32_t playerId) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    for (const auto& pair : rooms_) {
-        const auto& players = pair.second->getPlayers();
-        if (std::find(players.begin(), players.end(), playerId) != players.end()) {
-            return pair.second;
-        }
-    }
-    return nullptr;
-}
+
 
 } // namespace Network
 } // namespace Sanguosha
