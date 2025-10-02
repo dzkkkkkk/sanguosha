@@ -289,5 +289,51 @@ void Session::handleRoomListRequest() {
     send(response);
 }
 
+// 在 Session 类中添加处理游戏动作的方法
+void Session::handleGameAction(const sanguosha::GameAction& action) {
+    if (playerId_ == 0) {
+        std::cerr << "Player not logged in" << std::endl;
+        return;
+    }
+    
+    // 获取玩家所在的房间
+    auto& roomMgr = Sanguosha::Room::RoomManager::Instance();
+    auto room = roomMgr.getRoomByPlayerId(playerId_);
+    if (!room) {
+        std::cerr << "Player not in any room: " << playerId_ << std::endl;
+        return;
+    }
+    
+    auto gameInstance = room->getGameInstance();
+    if (!gameInstance) {
+        std::cerr << "Game not started in room: " << room->id() << std::endl;
+        return;
+    }
+    
+    // 处理游戏动作
+    if (!gameInstance->processPlayerAction(playerId_, action)) {
+        std::cerr << "Process game action failed for player: " << playerId_ << std::endl;
+        
+        // 发送错误响应
+        sanguosha::GameMessage response;
+        response.set_type(sanguosha::GAME_STATE);
+        auto* gameState = response.mutable_game_state();
+        gameState->set_game_log("操作无效");
+        send(response);
+    }
+}
+
+// 在 RoomManager 类中添加
+std::shared_ptr<Room> RoomManager::getRoomByPlayerId(uint32_t playerId) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const auto& pair : rooms_) {
+        const auto& players = pair.second->getPlayers();
+        if (std::find(players.begin(), players.end(), playerId) != players.end()) {
+            return pair.second;
+        }
+    }
+    return nullptr;
+}
+
 } // namespace Network
 } // namespace Sanguosha

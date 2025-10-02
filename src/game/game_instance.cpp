@@ -66,11 +66,34 @@ void GameInstance::dealInitialCards() {
 void GameInstance::processTurn(uint32_t playerId) {
     currentPlayer_ = playerId;
     
-    // 通知客户端回合开始
-    broadcastGameState();
+    // 摸牌阶段：摸2张牌
+    sanguosha::GameMessage drawMessage;
+    drawMessage.set_type(sanguosha::GAME_STATE);
+    auto* gameState = drawMessage.mutable_game_state();
+    gameState->set_current_player(currentPlayer_);
+    gameState->set_phase(sanguosha::DRAW_PHASE);
     
-    // 在实际实现中，这里会等待玩家操作
-    // 通过processPlayerAction方法处理玩家操作
+    // 给当前玩家发2张牌
+    auto& playerState = playerStates_[currentPlayer_];
+    for (int i = 0; i < 2 && !deck_.empty(); i++) {
+        uint32_t card = deck_.back();
+        deck_.pop_back();
+        playerState.add_hand_cards(card);
+    }
+    
+    // 复制玩家状态到gameState
+    for (const auto& pair : playerStates_) {
+        PlayerState* ps = gameState->add_players();
+        ps->CopyFrom(pair.second);
+    }
+    
+    // 广播游戏状态
+    broadcastGameState(gameState);
+    
+    // 进入出牌阶段
+    gameState->set_phase(sanguosha::PLAY_PHASE);
+    gameState->set_game_log("玩家 " + std::to_string(currentPlayer_) + " 的回合开始");
+    broadcastGameState(gameState);
 }
 
 bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& action) {
@@ -82,7 +105,46 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
         case sanguosha::ACTION_PLAY_CARD:
             // 处理出牌逻辑
             if (action.card_id() == sanguosha::CARD_ATTACK && action.target_player() != 0) {
+                // 从手牌中移除使用的牌
+                auto& playerState = playerStates_[playerId];
+                for (int i = 0; i < playerState.hand_cards_size(); i++) {
+                    if (playerState.hand_cards(i) == action.card_id()) {
+                        playerState.mutable_hand_cards()->DeleteSubrange(i, 1);
+                        break;
+                    }
+                }
+                
                 resolveAttack(playerId, action.target_player());
+            } else if (action.card_id() == sanguosha::CARD_HEAL) {
+                // 处理桃：给自己加血
+                auto& playerState = playerStates_[playerId];
+                if (playerState.hp() < playerState.max_hp()) {
+                    playerState.set_hp(playerState.hp() + 1);
+                    
+                    // 从手牌中移除使用的牌
+                    for (int i = 0; i < playerState.hand_cards_size(); i++) {
+                        if (playerState.hand_cards(i) == action.card_id()) {
+                            playerState.mutable_hand_cards()->DeleteSubrange(i, 1);
+                            break;
+                        }
+                    }
+                    
+                    // 广播加血信息
+                    sanguosha::GameMessage message;
+                    message.set_type(sanguosha::GAME_STATE);
+                    auto* gameState = message.mutable_game_state();
+                    gameState->set_current_player(currentPlayer_);
+                    gameState->set_phase(sanguosha::PLAY_PHASE);
+                    gameState->set_game_log("玩家 " + std::to_string(playerId) + " 使用了桃，恢复1点体力");
+                    
+                    // 复制玩家状态
+                    for (const auto& pair : playerStates_) {
+                        PlayerState* ps = gameState->add_players();
+                        ps->CopyFrom(pair.second);
+                    }
+                    
+                    broadcastGameState(gameState);
+                }
             }
             break;
             
@@ -93,22 +155,64 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
             break;
     }
     
-    // 检查游戏是否结束
-    if (checkGameOver()) {
-        // 处理游戏结束逻辑
-    }
-    
     return true;
 }
 
 void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
     auto& targetState = playerStates_[target];
     
-    // 简化版：直接扣血
-    targetState.set_hp(targetState.hp() - 1);
+    // 检查目标是否有闪
+    bool hasDodge = false;
+    for (int i = 0; i < targetState.hand_cards_size(); i++) {
+        if (targetState.hand_cards(i) == sanguosha::CARD_DEFEND) {
+            hasDodge = true;
+            // 移除闪
+            targetState.mutable_hand_cards()->DeleteSubrange(i, 1);
+            break;
+        }
+    }
     
-    // 广播更新后的游戏状态
-    broadcastGameState();
+    if (!hasDodge) {
+        // 没有闪，扣血
+        targetState.set_hp(targetState.hp() - 1);
+        
+        // 广播伤害信息
+        sanguosha::GameMessage message;
+        message.set_type(sanguosha::GAME_STATE);
+        auto* gameState = message.mutable_game_state();
+        gameState->set_current_player(currentPlayer_);
+        gameState->set_phase(sanguosha::PLAY_PHASE);
+        gameState->set_game_log("玩家 " + std::to_string(target) + " 受到1点伤害");
+        
+        // 复制玩家状态
+        for (const auto& pair : playerStates_) {
+            PlayerState* ps = gameState->add_players();
+            ps->CopyFrom(pair.second);
+        }
+        
+        broadcastGameState(gameState);
+        
+        // 检查游戏是否结束
+        if (checkGameOver()) {
+            handleGameOver();
+        }
+    } else {
+        // 有闪，伤害被抵挡
+        sanguosha::GameMessage message;
+        message.set_type(sanguosha::GAME_STATE);
+        auto* gameState = message.mutable_game_state();
+        gameState->set_current_player(currentPlayer_);
+        gameState->set_phase(sanguosha::PLAY_PHASE);
+        gameState->set_game_log("玩家 " + std::to_string(target) + " 使用了闪，抵挡了伤害");
+        
+        // 复制玩家状态
+        for (const auto& pair : playerStates_) {
+            PlayerState* ps = gameState->add_players();
+            ps->CopyFrom(pair.second);
+        }
+        
+        broadcastGameState(gameState);
+    }
 }
 
 void GameInstance::broadcastGameState() {
@@ -144,6 +248,28 @@ bool GameInstance::checkGameOver() {
         }
     }
     return false;
+}
+
+void GameInstance::handleGameOver() {
+    // 确定胜利者
+    uint32_t winnerId = 0;
+    for (const auto& pair : playerStates_) {
+        if (pair.second.hp() > 0) {
+            winnerId = pair.first;
+            break;
+        }
+    }
+    
+    // 发送游戏结束消息
+    sanguosha::GameMessage message;
+    message.set_type(sanguosha::GAME_OVER);
+    auto* gameOver = message.mutable_game_over();
+    gameOver->set_winner_id(winnerId);
+    
+    // 广播游戏结束
+    roomManager_.broadcastMessage(roomId_, sanguosha::GAME_OVER, *gameOver, server_);
+    
+    gameOver_ = true;
 }
 
 } // namespace sanguosha
