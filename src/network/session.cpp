@@ -113,6 +113,10 @@ void Session::doReadBody() {
                         std::cout << "Processing room request" << std::endl;
                         handleRoomRequest(msg.room_request());
                         break;
+                    case sanguosha::GAME_ACTION:
+                        std::cout << "Processing game action" << std::endl;
+                        handleGameAction(msg.game_action());
+                        break;
                     case sanguosha::ROOM_LIST_REQUEST:
                         handleRoomListRequest();
                         break;

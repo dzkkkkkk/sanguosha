@@ -153,10 +153,28 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
             break;
             
         case sanguosha::ACTION_END_TURN:
-            // 结束回合，切换到下一个玩家
-            currentPlayer_ = getNextPlayer();
-            processTurn(currentPlayer_);
-            break;
+    // 结束回合，切换到下一个玩家
+    currentPlayer_ = getNextPlayer();
+    
+    // 发送回合结束通知
+    sanguosha::GameMessage message;
+    message.set_type(sanguosha::GAME_STATE);
+    auto* gameState = message.mutable_game_state();
+    gameState->set_current_player(currentPlayer_);
+    gameState->set_phase(sanguosha::PLAY_PHASE);
+    gameState->set_game_log("玩家 " + std::to_string(playerId) + " 结束了回合");
+    
+    // 复制玩家状态
+    for (const auto& pair : playerStates_) {
+        PlayerState* ps = gameState->add_players();
+        ps->CopyFrom(pair.second);
+    }
+    
+    broadcastGameState(*gameState);
+    
+    // 开始下一个玩家的回合
+    processTurn(currentPlayer_);
+    break;
     }
     
     return true;
@@ -165,60 +183,27 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
 void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
     auto& targetState = playerStates_[target];
     
-    // 检查目标是否有闪
-    bool hasDodge = false;
-    for (int i = 0; i < targetState.hand_cards_size(); i++) {
-        if (targetState.hand_cards(i) == sanguosha::CARD_DEFEND) {
-            hasDodge = true;
-            // 移除闪 - 修复变量名错误
-            targetState.mutable_hand_cards()->erase(targetState.hand_cards().begin() + i);
-            break;
-        }
+    // 创建需要响应的游戏状态
+    sanguosha::GameMessage message;
+    message.set_type(sanguosha::GAME_STATE);
+    auto* gameState = message.mutable_game_state();
+    gameState->set_current_player(target); // 设置当前玩家为目标玩家
+    gameState->set_phase(sanguosha::PLAY_PHASE);
+    gameState->set_game_log("玩家 " + std::to_string(attacker) + " 对您使用了杀，请使用闪响应");
+    
+    // 复制玩家状态
+    for (const auto& pair : playerStates_) {
+        PlayerState* ps = gameState->add_players();
+        ps->CopyFrom(pair.second);
     }
     
-    if (!hasDodge) {
-        // 没有闪，扣血
-        targetState.set_hp(targetState.hp() - 1);
-        
-        // 广播伤害信息
-        sanguosha::GameMessage message;
-        message.set_type(sanguosha::GAME_STATE);
-        auto* gameState = message.mutable_game_state();
-        gameState->set_current_player(currentPlayer_);
-        gameState->set_phase(sanguosha::PLAY_PHASE);
-        gameState->set_game_log("玩家 " + std::to_string(target) + " 受到1点伤害");
-        
-        // 复制玩家状态
-        for (const auto& pair : playerStates_) {
-            PlayerState* ps = gameState->add_players();
-            ps->CopyFrom(pair.second);
-        }
-        
-        // 修复参数类型
-        broadcastGameState(*gameState);
-        
-        // 检查游戏是否结束
-        if (checkGameOver()) {
-            handleGameOver();
-        }
-    } else {
-        // 有闪，伤害被抵挡
-        sanguosha::GameMessage message;
-        message.set_type(sanguosha::GAME_STATE);
-        auto* gameState = message.mutable_game_state();
-        gameState->set_current_player(currentPlayer_);
-        gameState->set_phase(sanguosha::PLAY_PHASE);
-        gameState->set_game_log("玩家 " + std::to_string(target) + " 使用了闪，抵挡了伤害");
-        
-        // 复制玩家状态
-        for (const auto& pair : playerStates_) {
-            PlayerState* ps = gameState->add_players();
-            ps->CopyFrom(pair.second);
-        }
-        
-        // 修复参数类型
-        broadcastGameState(*gameState);
+    // 只发送给目标玩家
+    if (auto session = server_.getSession(target)) {
+        session->send(message);
     }
+    
+    // 设置超时计时器，如果没有响应则自动处理
+    // 这里需要实现超时逻辑，简化版可以先不处理
 }
 
 void GameInstance::broadcastGameState(const sanguosha::GameState& gameState) {
