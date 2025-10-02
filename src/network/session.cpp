@@ -6,6 +6,7 @@
 #include <ctime>
 #include "room/room.h" // 添加room.h包含
 #include "network/server.h" // 添加server.h包含
+#include "game/game_instance.h" 
 #include <iomanip>
 
 using boost::asio::ip::tcp;
