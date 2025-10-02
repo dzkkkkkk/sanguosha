@@ -63,6 +63,7 @@ void GameInstance::dealInitialCards() {
     }
 }
 
+// 修改 processTurn 函数中的 broadcastGameState 调用
 void GameInstance::processTurn(uint32_t playerId) {
     currentPlayer_ = playerId;
     
@@ -87,15 +88,17 @@ void GameInstance::processTurn(uint32_t playerId) {
         ps->CopyFrom(pair.second);
     }
     
-    // 广播游戏状态
-    broadcastGameState(gameState);
+    // 广播游戏状态 - 修复参数类型
+    broadcastGameState(*gameState);
     
     // 进入出牌阶段
     gameState->set_phase(sanguosha::PLAY_PHASE);
     gameState->set_game_log("玩家 " + std::to_string(currentPlayer_) + " 的回合开始");
-    broadcastGameState(gameState);
+    // 广播游戏状态 - 修复参数类型
+    broadcastGameState(*gameState);
 }
 
+// 修改 processPlayerAction 函数中的 broadcastGameState 调用
 bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& action) {
     if (playerId != currentPlayer_) {
         return false; // 不是当前回合玩家
@@ -143,7 +146,8 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
                         ps->CopyFrom(pair.second);
                     }
                     
-                    broadcastGameState(gameState);
+                    // 修复参数类型
+                    broadcastGameState(*gameState);
                 }
             }
             break;
@@ -166,8 +170,8 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
     for (int i = 0; i < targetState.hand_cards_size(); i++) {
         if (targetState.hand_cards(i) == sanguosha::CARD_DEFEND) {
             hasDodge = true;
-            // 移除闪
-            playerState.mutable_hand_cards()->erase(playerState.hand_cards().begin() + i);
+            // 移除闪 - 修复变量名错误
+            targetState.mutable_hand_cards()->erase(targetState.hand_cards().begin() + i);
             break;
         }
     }
@@ -190,7 +194,8 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
             ps->CopyFrom(pair.second);
         }
         
-        broadcastGameState(gameState);
+        // 修复参数类型
+        broadcastGameState(*gameState);
         
         // 检查游戏是否结束
         if (checkGameOver()) {
@@ -211,7 +216,8 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
             ps->CopyFrom(pair.second);
         }
         
-        broadcastGameState(gameState);
+        // 修复参数类型
+        broadcastGameState(*gameState);
     }
 }
 
