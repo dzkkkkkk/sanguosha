@@ -183,13 +183,33 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
 void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
     auto& targetState = playerStates_[target];
     
-    // 创建需要响应的游戏状态
+    // 检查目标玩家是否有闪
+    bool hasDodge = false;
+    for (int i = 0; i < targetState.hand_cards_size(); i++) {
+        if (targetState.hand_cards(i) == sanguosha::CARD_DEFEND) {
+            hasDodge = true;
+            // 使用闪：从手牌中移除
+            targetState.mutable_hand_cards()->erase(targetState.hand_cards().begin() + i);
+            break;
+        }
+    }
+    
+    if (!hasDodge) {
+        // 没有闪，扣血
+        targetState.set_hp(targetState.hp() - 1);
+    }
+    
+    // 广播游戏状态
     sanguosha::GameMessage message;
     message.set_type(sanguosha::GAME_STATE);
     auto* gameState = message.mutable_game_state();
-    gameState->set_current_player(target); // 设置当前玩家为目标玩家
-    gameState->set_phase(sanguosha::PLAY_PHASE);
-    gameState->set_game_log("玩家 " + std::to_string(attacker) + " 对您使用了杀，请使用闪响应");
+    gameState->set_current_player(currentPlayer_); // 当前回合玩家
+    gameState->set_phase(sanguosha::PLAY_PHASE); // 仍然处于出牌阶段
+    if (hasDodge) {
+        gameState->set_game_log("玩家 " + std::to_string(target) + " 使用了闪，抵消了杀");
+    } else {
+        gameState->set_game_log("玩家 " + std::to_string(target) + " 没有闪，受到1点伤害");
+    }
     
     // 复制玩家状态
     for (const auto& pair : playerStates_) {
@@ -197,13 +217,12 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
         ps->CopyFrom(pair.second);
     }
     
-    // 只发送给目标玩家
-    if (auto session = server_.getSession(target)) {
-        session->send(message);
-    }
+    broadcastGameState(*gameState);
     
-    // 设置超时计时器，如果没有响应则自动处理
-    // 这里需要实现超时逻辑，简化版可以先不处理
+    // 检查游戏结束
+    if (checkGameOver()) {
+        handleGameOver();
+    }
 }
 
 void GameInstance::broadcastGameState(const sanguosha::GameState& gameState) {
@@ -211,6 +230,9 @@ void GameInstance::broadcastGameState(const sanguosha::GameState& gameState) {
 }
 
 uint32_t GameInstance::getNextPlayer() {
+    if (playerStates_.empty()) {
+        return 0; // 但理论上不会为空，添加保护
+    }
     // 简单实现：按玩家ID顺序获取下一个玩家
     auto it = playerStates_.find(currentPlayer_);
     if (it != playerStates_.end()) {
