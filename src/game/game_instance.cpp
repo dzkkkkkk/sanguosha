@@ -100,6 +100,20 @@ void GameInstance::processTurn(uint32_t playerId) {
 
 // 修改 processPlayerAction 函数中的 broadcastGameState 调用
 bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& action) {
+
+    // 检查玩家是否已死亡
+    auto playerIt = playerStates_.find(playerId);
+    if (playerIt == playerStates_.end() || playerIt->second.hp() <= 0) {
+        std::cerr << "Player " << playerId << " is dead or not found, ignoring action" << std::endl;
+        return false;
+    }
+    
+    // 检查游戏是否已结束
+    if (gameOver_) {
+        std::cerr << "Game is over, ignoring action" << std::endl;
+        return false;
+    }
+
     if (playerId != currentPlayer_) {
         return false; // 不是当前回合玩家
     }
@@ -197,6 +211,15 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
     if (!hasDodge) {
         // 没有闪，扣血
         targetState.set_hp(targetState.hp() - 1);
+        
+        // 检查目标玩家是否死亡
+        if (targetState.hp() <= 0) {
+            // 玩家死亡，检查游戏是否结束
+            if (checkGameOver()) {
+                handleGameOver();
+                return; // 游戏结束，不再继续处理
+            }
+        }
     }
     
     // 广播游戏状态
