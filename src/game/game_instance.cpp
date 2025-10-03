@@ -121,18 +121,34 @@ bool GameInstance::processPlayerAction(uint32_t playerId, const GameAction& acti
     switch (action.type()) {
         case sanguosha::ACTION_PLAY_CARD:
             // 处理出牌逻辑
-            if (action.card_id() == sanguosha::CARD_ATTACK && action.target_player() != 0) {
-                // 从手牌中移除使用的牌
-                auto& playerState = playerStates_[playerId];
-                for (int i = 0; i < playerState.hand_cards_size(); i++) {
-                    if (playerState.hand_cards(i) == action.card_id()) {
-                        playerState.mutable_hand_cards()->erase(playerState.hand_cards().begin() + i);
-                        break;
-                    }
-                }
-                
-                resolveAttack(playerId, action.target_player());
-            } else if (action.card_id() == sanguosha::CARD_HEAL) {
+    if (action.card_id() == sanguosha::CARD_ATTACK && action.target_player() != 0) {
+        // 从手牌中移除使用的牌
+        auto& playerState = playerStates_[playerId];
+        for (int i = 0; i < playerState.hand_cards_size(); i++) {
+            if (playerState.hand_cards(i) == action.card_id()) {
+                playerState.mutable_hand_cards()->erase(playerState.hand_cards().begin() + i);
+                break;
+            }
+        }
+        
+        resolveAttack(playerId, action.target_player());
+        
+        // 修复：出牌后不结束回合，只更新状态
+        sanguosha::GameMessage message;
+        message.set_type(sanguosha::GAME_STATE);
+        auto* gameState = message.mutable_game_state();
+        gameState->set_current_player(currentPlayer_);
+        gameState->set_phase(sanguosha::PLAY_PHASE);
+        gameState->set_game_log("玩家 " + std::to_string(playerId) + " 使用了杀");
+        
+        // 复制玩家状态
+        for (const auto& pair : playerStates_) {
+            PlayerState* ps = gameState->add_players();
+            ps->CopyFrom(pair.second);
+        }
+        
+        broadcastGameState(*gameState);
+    } else if (action.card_id() == sanguosha::CARD_HEAL) {
                 // 处理桃：给自己加血
                 auto& playerState = playerStates_[playerId];
                 if (playerState.hp() < playerState.max_hp()) {
@@ -214,36 +230,36 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
         
         // 检查目标玩家是否死亡
         if (targetState.hp() <= 0) {
-    // 玩家死亡，检查游戏是否结束
-    if (checkGameOver()) {
-        handleGameOver();
-        return; // 游戏结束，不再继续处理
-    }
-    
-    // 添加死亡玩家状态更新
-    sanguosha::GameMessage deathMessage;
-    deathMessage.set_type(sanguosha::GAME_STATE);
-    auto* deathState = deathMessage.mutable_game_state();
-    deathState->set_current_player(currentPlayer_);
-    deathState->set_phase(sanguosha::PLAY_PHASE);
-    deathState->set_game_log("玩家 " + std::to_string(target) + " 死亡");
-    
-    // 复制玩家状态
-    for (const auto& pair : playerStates_) {
-        PlayerState* ps = deathState->add_players();
-        ps->CopyFrom(pair.second);
-    }
-    
-    broadcastGameState(*deathState);
-}
+            // 玩家死亡，检查游戏是否结束
+            if (checkGameOver()) {
+                handleGameOver();
+                return; // 游戏结束，不再继续处理
+            }
+            
+            // 添加死亡玩家状态更新
+            sanguosha::GameMessage deathMessage;
+            deathMessage.set_type(sanguosha::GAME_STATE);
+            auto* deathState = deathMessage.mutable_game_state();
+            deathState->set_current_player(currentPlayer_);
+            deathState->set_phase(sanguosha::PLAY_PHASE);
+            deathState->set_game_log("玩家 " + std::to_string(target) + " 死亡");
+            
+            // 复制玩家状态
+            for (const auto& pair : playerStates_) {
+                PlayerState* ps = deathState->add_players();
+                ps->CopyFrom(pair.second);
+            }
+            
+            broadcastGameState(*deathState);
+        }
     }
     
     // 广播游戏状态
     sanguosha::GameMessage message;
     message.set_type(sanguosha::GAME_STATE);
     auto* gameState = message.mutable_game_state();
-    gameState->set_current_player(currentPlayer_); // 当前回合玩家
-    gameState->set_phase(sanguosha::PLAY_PHASE); // 仍然处于出牌阶段
+    gameState->set_current_player(currentPlayer_);
+    gameState->set_phase(sanguosha::PLAY_PHASE);
     if (hasDodge) {
         gameState->set_game_log("玩家 " + std::to_string(target) + " 使用了闪，抵消了杀");
     } else {
