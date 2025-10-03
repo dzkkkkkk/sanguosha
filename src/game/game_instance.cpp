@@ -295,10 +295,10 @@ bool GameInstance::checkGameOver() {
 
 void GameInstance::handleGameOver() {
     // 确定胜利者
-    uint32_t winnerId = 0;
+    winnerId_ = 0;
     for (const auto& pair : playerStates_) {
         if (pair.second.hp() > 0) {
-            winnerId = pair.first;
+            winnerId_ = pair.first;
             break;
         }
     }
@@ -307,12 +307,28 @@ void GameInstance::handleGameOver() {
     sanguosha::GameMessage message;
     message.set_type(sanguosha::GAME_OVER);
     auto* gameOver = message.mutable_game_over();
-    gameOver->set_winner_id(winnerId);
+    gameOver->set_winner_id(winnerId_);
     
     // 广播游戏结束
     roomManager_.broadcastMessage(roomId_, sanguosha::GAME_OVER, *gameOver, server_);
     
     gameOver_ = true;
+}
+
+bool GameInstance::isGameOver() const {
+    return gameOver_;
+}
+
+uint32_t GameInstance::getWinner() const {
+    // 这里需要实现获取胜利者的逻辑
+    // 假设我们在handleGameOver中已经确定了胜利者
+    // 你可能需要在类中添加一个winnerId_成员变量来存储胜利者ID
+    for (const auto& pair : playerStates_) {
+        if (pair.second.hp() > 0) {
+            return pair.first; // 返回第一个存活的玩家作为胜利者
+        }
+    }
+    return 0; // 如果没有存活的玩家，返回0
 }
 
 } // namespace sanguosha

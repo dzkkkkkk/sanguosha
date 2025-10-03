@@ -40,6 +40,9 @@ public:
     // 获取当前游戏状态
     GameState getGameState() const;
 
+    bool isGameOver() const;
+    uint32_t getWinner() const;
+
 private:
     // 添加缺失的方法声明
     void initDeck();
@@ -61,6 +64,7 @@ private:
     std::unordered_map<uint32_t, PlayerState> playerStates_;
     uint32_t currentPlayer_;
     bool gameOver_;
+    uint32_t winnerId_;
 };
 
 } // namespace sanguosha
