@@ -315,6 +315,19 @@ void Session::handleGameAction(const sanguosha::GameAction& action) {
         return;
     }
     
+    // 检查游戏是否已结束
+    if (gameInstance->isGameOver()) {
+        std::cerr << "Game is over, ignoring action" << std::endl;
+        
+        // 发送游戏结束消息
+        sanguosha::GameMessage response;
+        response.set_type(sanguosha::GAME_OVER);
+        auto* gameOver = response.mutable_game_over();
+        gameOver->set_winner_id(gameInstance->getWinner());
+        send(response);
+        return;
+    }
+    
     // 处理游戏动作
     if (!gameInstance->processPlayerAction(playerId_, action)) {
         std::cerr << "Process game action failed for player: " << playerId_ << std::endl;

@@ -214,12 +214,28 @@ void GameInstance::resolveAttack(uint32_t attacker, uint32_t target) {
         
         // 检查目标玩家是否死亡
         if (targetState.hp() <= 0) {
-            // 玩家死亡，检查游戏是否结束
-            if (checkGameOver()) {
-                handleGameOver();
-                return; // 游戏结束，不再继续处理
-            }
-        }
+    // 玩家死亡，检查游戏是否结束
+    if (checkGameOver()) {
+        handleGameOver();
+        return; // 游戏结束，不再继续处理
+    }
+    
+    // 添加死亡玩家状态更新
+    sanguosha::GameMessage deathMessage;
+    deathMessage.set_type(sanguosha::GAME_STATE);
+    auto* deathState = deathMessage.mutable_game_state();
+    deathState->set_current_player(currentPlayer_);
+    deathState->set_phase(sanguosha::PLAY_PHASE);
+    deathState->set_game_log("玩家 " + std::to_string(target) + " 死亡");
+    
+    // 复制玩家状态
+    for (const auto& pair : playerStates_) {
+        PlayerState* ps = deathState->add_players();
+        ps->CopyFrom(pair.second);
+    }
+    
+    broadcastGameState(*deathState);
+}
     }
     
     // 广播游戏状态

@@ -206,6 +206,11 @@ void RoomManager::broadcastMessage(uint32_t roomId, sanguosha::MessageType type,
                 gameMsg.mutable_room_response()->CopyFrom(dynamic_cast<const sanguosha::RoomResponse&>(message));
             }
             break;
+        case sanguosha::GAME_OVER:
+            if (message.GetTypeName() == "sanguosha.GameOver") {
+                gameMsg.mutable_game_over()->CopyFrom(dynamic_cast<const sanguosha::GameOver&>(message));
+            }
+            break;
         default:
             std::cerr << "Unknown message type for broadcast: " << type << std::endl;
             return;
