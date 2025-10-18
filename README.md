@@ -13,5 +13,8 @@
 ​​构建工具​​: CMake 3.12+
 ​​并发模型​​: Reactor异步模型 + 多线程锁同步
 
+ps:服务器与客户端均基于wsl2，目前未接入数据库
+
 客户端地址：https://github.com/dzkkkkkk/SanguoshaClient
+
 
