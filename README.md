@@ -12,3 +12,5 @@
 ​​序列化​​: Google Protobuf
 ​​构建工具​​: CMake 3.12+
 ​​并发模型​​: Reactor异步模型 + 多线程锁同步
+
+服务器地址：https://github.com/dzkkkkkk/SanguoshaClient
