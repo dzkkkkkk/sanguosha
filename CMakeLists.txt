@@ -13,8 +13,8 @@ find_package(Boost 1.71 REQUIRED COMPONENTS system)
 # Protobuf
 find_package(Protobuf REQUIRED)
 
-# SQLite3
-find_package(SQLite3 REQUIRED)
+# MySQL
+find_package(MySQL REQUIRED)
 
 # OpenSSL
 find_package(OpenSSL REQUIRED)
@@ -24,7 +24,7 @@ include_directories(
     include 
     ${Boost_INCLUDE_DIRS}
     ${Protobuf_INCLUDE_DIRS}
-    ${SQLite3_INCLUDE_DIRS}
+    ${MYSQL_INCLUDE_DIR}
     ${OPENSSL_INCLUDE_DIR}
 )
 
@@ -49,7 +49,7 @@ target_link_libraries(sanguosha_server
     PRIVATE 
         Boost::system
         protobuf::libprotobuf
-        SQLite::SQLite3
+        ${MYSQL_LIBRARIES}
         OpenSSL::SSL
         OpenSSL::Crypto
         pthread

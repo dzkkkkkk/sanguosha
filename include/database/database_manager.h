@@ -1,8 +1,7 @@
 #pragma once
 
-#include <sqlite3.h>
+#include <mysql/mysql.h>
 #include <string>
-#include <memory>
 #include <mutex>
 
 namespace Sanguosha {
@@ -12,7 +11,11 @@ class DatabaseManager {
 public:
     static DatabaseManager& Instance();
     
-    bool initialize(const std::string& dbPath = "sanguosha.db");
+    bool initialize(const std::string& dbName = "sanguosha",
+                    const std::string& host = "127.0.0.1",
+                    const std::string& user = "root",
+                    const std::string& password = "",
+                    unsigned int port = 3306);
     bool registerUser(const std::string& username, const std::string& password, const std::string& email, uint32_t& userId);
     bool authenticateUser(const std::string& username, const std::string& password, uint32_t& userId);
     bool userExists(const std::string& username);
@@ -24,8 +27,9 @@ private:
     bool createTables();
     std::string hashPassword(const std::string& password);
     bool executeQuery(const std::string& query);
+    std::string escapeString(const std::string& value);
     
-    sqlite3* db_;
+    MYSQL* conn_;
     std::mutex mutex_;
     bool initialized_;
 };

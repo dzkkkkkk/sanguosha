@@ -7,11 +7,11 @@
 namespace Sanguosha {
 namespace Database {
 
-DatabaseManager::DatabaseManager() : db_(nullptr), initialized_(false) {}
+DatabaseManager::DatabaseManager() : conn_(nullptr), initialized_(false) {}
 
 DatabaseManager::~DatabaseManager() {
-    if (db_) {
-        sqlite3_close(db_);
+    if (conn_) {
+        mysql_close(conn_);
     }
 }
 
@@ -20,16 +20,37 @@ DatabaseManager& DatabaseManager::Instance() {
     return instance;
 }
 
-bool DatabaseManager::initialize(const std::string& dbPath) {
+bool DatabaseManager::initialize(const std::string& dbName,
+                                 const std::string& host,
+                                 const std::string& user,
+                                 const std::string& password,
+                                 unsigned int port) {
     std::lock_guard<std::mutex> lock(mutex_);
     
     if (initialized_) {
         return true;
     }
     
-    int rc = sqlite3_open(dbPath.c_str(), &db_);
-    if (rc != SQLITE_OK) {
-        std::cerr << "Cannot open database: " << sqlite3_errmsg(db_) << std::endl;
+    conn_ = mysql_init(nullptr);
+    if (!conn_) {
+        std::cerr << "MySQL initialization failed" << std::endl;
+        return false;
+    }
+    
+    if (!mysql_real_connect(conn_, host.c_str(), user.c_str(), password.c_str(), nullptr, port, nullptr, 0)) {
+        std::cerr << "Cannot connect to MySQL: " << mysql_error(conn_) << std::endl;
+        mysql_close(conn_);
+        conn_ = nullptr;
+        return false;
+    }
+
+    std::string createDbQuery = "CREATE DATABASE IF NOT EXISTS `" + dbName + "` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;";
+    if (!executeQuery(createDbQuery)) {
+        return false;
+    }
+
+    if (mysql_select_db(conn_, dbName.c_str()) != 0) {
+        std::cerr << "Failed to select database: " << mysql_error(conn_) << std::endl;
         return false;
     }
     
@@ -44,15 +65,15 @@ bool DatabaseManager::initialize(const std::string& dbPath) {
 }
 
 bool DatabaseManager::createTables() {
-    const char* createUsersTable = R"(
+    const std::string createUsersTable = R"(
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(128) UNIQUE NOT NULL,
+            password_hash VARCHAR(128) NOT NULL,
+            email VARCHAR(256) UNIQUE NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             last_login DATETIME
-        );
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     )";
     
     return executeQuery(createUsersTable);
@@ -66,25 +87,24 @@ bool DatabaseManager::registerUser(const std::string& username, const std::strin
         return false;
     }
     
-    // 检查用户是否已存在
     if (userExists(username)) {
         return false;
     }
     
+    std::string safeUsername = escapeString(username);
+    std::string safeEmail = escapeString(email);
     std::string passwordHash = hashPassword(password);
+    std::string safePasswordHash = escapeString(passwordHash);
     
     std::stringstream query;
     query << "INSERT INTO users (username, password_hash, email) VALUES ('"
-          << username << "', '" << passwordHash << "', '" << email << "');";
+          << safeUsername << "', '" << safePasswordHash << "', '" << safeEmail << "');";
     
     if (!executeQuery(query.str())) {
         return false;
     }
     
-    // 获取新创建的用户ID
-    sqlite3_int64 rowId = sqlite3_last_insert_rowid(db_);
-    userId = static_cast<uint32_t>(rowId);
-    
+    userId = static_cast<uint32_t>(mysql_insert_id(conn_));
     return true;
 }
 
@@ -95,50 +115,60 @@ bool DatabaseManager::authenticateUser(const std::string& username, const std::s
         return false;
     }
     
-    std::string passwordHash = hashPassword(password);
+    std::string safeUsername = escapeString(username);
+    std::string safePasswordHash = escapeString(hashPassword(password));
     
     std::stringstream query;
-    query << "SELECT id FROM users WHERE username = '" << username 
-          << "' AND password_hash = '" << passwordHash << "' LIMIT 1;";
+    query << "SELECT id FROM users WHERE username = '" << safeUsername 
+          << "' AND password_hash = '" << safePasswordHash << "' LIMIT 1;";
     
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db_) << std::endl;
+    if (mysql_query(conn_, query.str().c_str()) != 0) {
+        std::cerr << "Failed to execute query: " << mysql_error(conn_) << std::endl;
+        return false;
+    }
+    
+    MYSQL_RES* result = mysql_store_result(conn_);
+    if (!result) {
+        std::cerr << "Failed to store query result: " << mysql_error(conn_) << std::endl;
         return false;
     }
     
     bool success = false;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        userId = static_cast<uint32_t>(sqlite3_column_int(stmt, 0));
+    MYSQL_ROW row = mysql_fetch_row(result);
+    if (row) {
+        userId = static_cast<uint32_t>(std::stoul(row[0]));
         success = true;
-        
-        // 更新最后登录时间
+
         std::stringstream updateQuery;
         updateQuery << "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = " << userId << ";";
         executeQuery(updateQuery.str());
     }
     
-    sqlite3_finalize(stmt);
+    mysql_free_result(result);
     return success;
 }
 
 bool DatabaseManager::userExists(const std::string& username) {
+    std::string safeUsername = escapeString(username);
     std::stringstream query;
-    query << "SELECT COUNT(*) FROM users WHERE username = '" << username << "' LIMIT 1;";
-    
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
+    query << "SELECT COUNT(*) FROM users WHERE username = '" << safeUsername << "' LIMIT 1;";
+
+    if (mysql_query(conn_, query.str().c_str()) != 0) {
         return false;
     }
-    
-    bool exists = false;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        exists = sqlite3_column_int(stmt, 0) > 0;
+
+    MYSQL_RES* result = mysql_store_result(conn_);
+    if (!result) {
+        return false;
     }
-    
-    sqlite3_finalize(stmt);
+
+    bool exists = false;
+    MYSQL_ROW row = mysql_fetch_row(result);
+    if (row && row[0]) {
+        exists = std::stoul(row[0]) > 0;
+    }
+
+    mysql_free_result(result);
     return exists;
 }
 
@@ -156,12 +186,21 @@ std::string DatabaseManager::hashPassword(const std::string& password) {
     return ss.str();
 }
 
+std::string DatabaseManager::escapeString(const std::string& value) {
+    if (!conn_) {
+        return value;
+    }
+    
+    std::string escaped;
+    escaped.resize(value.size() * 2 + 1);
+    unsigned long length = mysql_real_escape_string(conn_, &escaped[0], value.c_str(), static_cast<unsigned long>(value.size()));
+    escaped.resize(length);
+    return escaped;
+}
+
 bool DatabaseManager::executeQuery(const std::string& query) {
-    char* errMsg = nullptr;
-    int rc = sqlite3_exec(db_, query.c_str(), nullptr, nullptr, &errMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "SQL error: " << errMsg << std::endl;
-        sqlite3_free(errMsg);
+    if (mysql_query(conn_, query.c_str()) != 0) {
+        std::cerr << "SQL error: " << mysql_error(conn_) << std::endl;
         return false;
     }
     return true;

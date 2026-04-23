@@ -10,15 +10,15 @@ enum MessageType {
   REGISTER_REQUEST = 3;
   REGISTER_RESPONSE = 4;
   HEARTBEAT = 5;
-  ROOM_REQUEST = 4;
-  ROOM_RESPONSE = 5;
-  GAME_ACTION = 6;
-  GAME_STATE = 7;
-  GAME_START = 8;
-  GAME_OVER = 9;           // 修改为9，避免与后面的冲突
-  GAME_STATE_REQUEST = 10;
-  ROOM_LIST_REQUEST = 11;
-  ROOM_LIST_RESPONSE = 12;
+  ROOM_REQUEST = 6;
+  ROOM_RESPONSE = 7;
+  GAME_ACTION = 8;
+  GAME_STATE = 9;
+  GAME_START = 10;
+  GAME_OVER = 11;
+  GAME_STATE_REQUEST = 12;
+  ROOM_LIST_REQUEST = 13;
+  ROOM_LIST_RESPONSE = 14;
 }
 
 // 登录请求
@@ -153,13 +153,13 @@ message GameMessage {
     RegisterRequest register_request = 4;
     RegisterResponse register_response = 5;
     Heartbeat heartbeat = 6;
-    RoomRequest room_request = 5;
-    RoomResponse room_response = 6;
-    GameAction game_action = 7;    // 新增
-    GameState game_state = 8;     // 新增
-    GameStart game_start = 9;     // 新增
-    GameOver game_over = 10;     // 新增
-    RoomListResponse room_list_response = 14; // 添加这行，使用新的字段编号
+    RoomRequest room_request = 7;
+    RoomResponse room_response = 8;
+    GameAction game_action = 9;    // 新增
+    GameState game_state = 10;     // 新增
+    GameStart game_start = 11;     // 新增
+    GameOver game_over = 12;     // 新增
+    RoomListResponse room_list_response = 13;
   }
 }
 
