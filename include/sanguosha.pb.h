@@ -71,6 +71,12 @@ extern LoginRequestDefaultTypeInternal _LoginRequest_default_instance_;
 class LoginResponse;
 class LoginResponseDefaultTypeInternal;
 extern LoginResponseDefaultTypeInternal _LoginResponse_default_instance_;
+class RegisterRequest;
+class RegisterRequestDefaultTypeInternal;
+extern RegisterRequestDefaultTypeInternal _RegisterRequest_default_instance_;
+class RegisterResponse;
+class RegisterResponseDefaultTypeInternal;
+extern RegisterResponseDefaultTypeInternal _RegisterResponse_default_instance_;
 class PlayerState;
 class PlayerStateDefaultTypeInternal;
 extern PlayerStateDefaultTypeInternal _PlayerState_default_instance_;
@@ -97,6 +103,8 @@ template<> ::sanguosha::GameState* Arena::CreateMaybeMessage<::sanguosha::GameSt
 template<> ::sanguosha::Heartbeat* Arena::CreateMaybeMessage<::sanguosha::Heartbeat>(Arena*);
 template<> ::sanguosha::LoginRequest* Arena::CreateMaybeMessage<::sanguosha::LoginRequest>(Arena*);
 template<> ::sanguosha::LoginResponse* Arena::CreateMaybeMessage<::sanguosha::LoginResponse>(Arena*);
+template<> ::sanguosha::RegisterRequest* Arena::CreateMaybeMessage<::sanguosha::RegisterRequest>(Arena*);
+template<> ::sanguosha::RegisterResponse* Arena::CreateMaybeMessage<::sanguosha::RegisterResponse>(Arena*);
 template<> ::sanguosha::PlayerState* Arena::CreateMaybeMessage<::sanguosha::PlayerState>(Arena*);
 template<> ::sanguosha::RoomInfo* Arena::CreateMaybeMessage<::sanguosha::RoomInfo>(Arena*);
 template<> ::sanguosha::RoomListResponse* Arena::CreateMaybeMessage<::sanguosha::RoomListResponse>(Arena*);
@@ -110,16 +118,18 @@ enum MessageType {
   UNKNOWN = 0,
   LOGIN_REQUEST = 1,
   LOGIN_RESPONSE = 2,
-  HEARTBEAT = 3,
-  ROOM_REQUEST = 4,
-  ROOM_RESPONSE = 5,
-  GAME_ACTION = 6,
-  GAME_STATE = 7,
-  GAME_START = 8,
-  GAME_OVER = 9,
-  GAME_STATE_REQUEST = 10,
-  ROOM_LIST_REQUEST = 11,
-  ROOM_LIST_RESPONSE = 12,
+  REGISTER_REQUEST = 3,
+  REGISTER_RESPONSE = 4,
+  HEARTBEAT = 5,
+  ROOM_REQUEST = 6,
+  ROOM_RESPONSE = 7,
+  GAME_ACTION = 8,
+  GAME_STATE = 9,
+  GAME_START = 10,
+  GAME_OVER = 11,
+  GAME_STATE_REQUEST = 12,
+  ROOM_LIST_REQUEST = 13,
+  ROOM_LIST_RESPONSE = 14,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   MessageType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };

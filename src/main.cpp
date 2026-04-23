@@ -1,10 +1,17 @@
 #include "network/server.h"
 #include "room/room_manager.h"
+#include "database/database_manager.h"
 
 int main() {
-    std::cout << "Starting Simplified Sanguosha Server v1.0" << std::endl;
+    std::cout << "Starting Sanguosha Server v1.0 with Database Support" << std::endl;
     
     try {
+        // 初始化数据库
+        if (!Sanguosha::Database::DatabaseManager::Instance().initialize()) {
+            std::cerr << "Failed to initialize database" << std::endl;
+            return 1;
+        }
+        
         Sanguosha::Network::Server server;
         
         // 关键：将Server实例设置给RoomManager单例

@@ -7,6 +7,7 @@
 #include "room/room.h" // 添加room.h包含
 #include "network/server.h" // 添加server.h包含
 #include "game/game_instance.h" 
+#include "database/database_manager.h" // 添加数据库管理器包含
 #include <iomanip>
 
 using boost::asio::ip::tcp;
@@ -106,6 +107,10 @@ void Session::doReadBody() {
                         std::cout << "Processing login request" << std::endl;
                         handleLogin(msg.login_request());
                         break;
+                    case sanguosha::REGISTER_REQUEST:
+                        std::cout << "Processing register request" << std::endl;
+                        handleRegister(msg);
+                        break;
                     case sanguosha::HEARTBEAT:
                         handleHeartbeat(ec);
                         break;
@@ -174,16 +179,38 @@ void Session::handleLogin(const sanguosha::LoginRequest& login) {
     response.set_type(sanguosha::LOGIN_RESPONSE);
     auto* login_res = response.mutable_login_response();
     
-    // 简化登录：允许任何用户名登录，分配随机用户ID
-    // 在实际应用中，这里应该验证用户名和密码
-    playerId_ = 1000 + (rand() % 9000);
-    login_res->set_success(true);
-    login_res->set_user_id(playerId_);
+    auto& db = Sanguosha::Database::DatabaseManager::Instance();
+    uint32_t userId;
     
-    std::cout << "Login successful, user ID: " << playerId_ << std::endl;
+    if (db.authenticateUser(login.username(), login.password(), userId)) {
+        playerId_ = userId;
+        login_res->set_success(true);
+        login_res->set_user_id(playerId_);
+        std::cout << "Login successful, user ID: " << playerId_ << std::endl;
+        
+        // 注册会话到服务器
+        server_.registerSession(playerId_, shared_from_this());
+    } else {
+        login_res->set_success(false);
+        login_res->set_error_message("Invalid username or password");
+        std::cout << "Login failed for user: " << login.username() << std::endl;
+    }
     
-    // 注册会话到服务器
-    server_.registerSession(playerId_, shared_from_this());
+    send(response);
+}
+
+void Session::handleRegister(const sanguosha::GameMessage& msg) {
+    std::cout << "Register attempt" << std::endl;
+    
+    sanguosha::GameMessage response;
+    response.set_type(sanguosha::REGISTER_RESPONSE);
+    
+    // 由于protobuf生成文件的问题，我们暂时简化处理
+    // 在实际项目中，应该从msg中提取register_request字段
+    // 这里先返回一个错误响应
+    auto* reg_res = response.mutable_register_response();
+    reg_res->set_success(false);
+    reg_res->set_error_message("Registration not implemented yet");
     
     send(response);
 }

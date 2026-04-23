@@ -7,7 +7,9 @@ enum MessageType {
   UNKNOWN = 0;
   LOGIN_REQUEST = 1;
   LOGIN_RESPONSE = 2;
-  HEARTBEAT = 3;
+  REGISTER_REQUEST = 3;
+  REGISTER_RESPONSE = 4;
+  HEARTBEAT = 5;
   ROOM_REQUEST = 4;
   ROOM_RESPONSE = 5;
   GAME_ACTION = 6;
@@ -27,6 +29,20 @@ message LoginRequest {
 
 // 登录响应
 message LoginResponse {
+  bool success = 1;
+  string error_message = 2;
+  uint32 user_id = 3;
+}
+
+// 注册请求
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+}
+
+// 注册响应
+message RegisterResponse {
   bool success = 1;
   string error_message = 2;
   uint32 user_id = 3;
@@ -134,7 +150,9 @@ message GameMessage {
   oneof content {
     LoginRequest login_request = 2;
     LoginResponse login_response = 3;
-    Heartbeat heartbeat = 4;
+    RegisterRequest register_request = 4;
+    RegisterResponse register_response = 5;
+    Heartbeat heartbeat = 6;
     RoomRequest room_request = 5;
     RoomResponse room_response = 6;
     GameAction game_action = 7;    // 新增

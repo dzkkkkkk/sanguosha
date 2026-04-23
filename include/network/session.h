@@ -25,6 +25,7 @@ private:
     void doReadHeader();
     void doReadBody();
     void handleLogin(const sanguosha::LoginRequest& login);
+    void handleRegister(const sanguosha::GameMessage& msg);
     void handleHeartbeat(const boost::system::error_code& ec);
     void startHeartbeat();
     void handleRoomRequest(const sanguosha::RoomRequest& request);
