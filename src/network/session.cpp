@@ -205,12 +205,41 @@ void Session::handleRegister(const sanguosha::GameMessage& msg) {
     sanguosha::GameMessage response;
     response.set_type(sanguosha::REGISTER_RESPONSE);
     
-    // 由于protobuf生成文件的问题，我们暂时简化处理
-    // 在实际项目中，应该从msg中提取register_request字段
-    // 这里先返回一个错误响应
     auto* reg_res = response.mutable_register_response();
-    reg_res->set_success(false);
-    reg_res->set_error_message("Registration not implemented yet");
+    
+    // 提取注册请求数据
+    if (!msg.has_register_request()) {
+        reg_res->set_success(false);
+        reg_res->set_error_message("Invalid register request");
+        send(response);
+        return;
+    }
+    
+    const auto& reg_req = msg.register_request();
+    std::string username = reg_req.username();
+    std::string password = reg_req.password();
+    std::string email = reg_req.email();
+    
+    // 验证输入
+    if (username.empty() || password.empty() || email.empty()) {
+        reg_res->set_success(false);
+        reg_res->set_error_message("Username, password and email are required");
+        send(response);
+        return;
+    }
+    
+    // 调用数据库注册用户
+    Sanguosha::Database::DatabaseManager& db = Sanguosha::Database::DatabaseManager::Instance();
+    uint32_t userId;
+    if (db.registerUser(username, password, email, userId)) {
+        reg_res->set_success(true);
+        reg_res->set_user_id(userId);
+        std::cout << "Registration successful for user: " << username << " (ID: " << userId << ")" << std::endl;
+    } else {
+        reg_res->set_success(false);
+        reg_res->set_error_message("Registration failed - user may already exist");
+        std::cout << "Registration failed for user: " << username << std::endl;
+    }
     
     send(response);
 }

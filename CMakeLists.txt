@@ -7,14 +7,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 设置项目源码目录
 set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+# PkgConfig
+find_package(PkgConfig REQUIRED)
+
 # Boost
 find_package(Boost 1.71 REQUIRED COMPONENTS system)
 
 # Protobuf
 find_package(Protobuf REQUIRED)
 
-# MySQL
-find_package(MySQL REQUIRED)
+# SQLite
+pkg_check_modules(SQLite3 REQUIRED sqlite3)
 
 # OpenSSL
 find_package(OpenSSL REQUIRED)
@@ -24,7 +27,7 @@ include_directories(
     include 
     ${Boost_INCLUDE_DIRS}
     ${Protobuf_INCLUDE_DIRS}
-    ${MYSQL_INCLUDE_DIR}
+    ${SQLite3_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
 )
 
@@ -44,12 +47,25 @@ add_executable(sanguosha_server
     $<TARGET_OBJECTS:database>
 )
 
-# 简化依赖
+# 添加测试程序
+add_executable(test_db test_db.cpp
+    $<TARGET_OBJECTS:database>
+)
+
+# 链接库
 target_link_libraries(sanguosha_server
     PRIVATE 
         Boost::system
         protobuf::libprotobuf
-        ${MYSQL_LIBRARIES}
+        ${SQLite3_LIBRARIES}
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        pthread
+)
+
+target_link_libraries(test_db
+    PRIVATE
+        ${SQLite3_LIBRARIES}
         OpenSSL::SSL
         OpenSSL::Crypto
         pthread

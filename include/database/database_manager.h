@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mysql/mysql.h>
+#include <sqlite3.h>
 #include <string>
 #include <mutex>
 
@@ -11,11 +11,11 @@ class DatabaseManager {
 public:
     static DatabaseManager& Instance();
     
-    bool initialize(const std::string& dbName = "sanguosha",
-                    const std::string& host = "127.0.0.1",
-                    const std::string& user = "root",
+    bool initialize(const std::string& dbName = "sanguosha.db",
+                    const std::string& host = "",
+                    const std::string& user = "",
                     const std::string& password = "",
-                    unsigned int port = 3306);
+                    unsigned int port = 0);
     bool registerUser(const std::string& username, const std::string& password, const std::string& email, uint32_t& userId);
     bool authenticateUser(const std::string& username, const std::string& password, uint32_t& userId);
     bool userExists(const std::string& username);
@@ -29,7 +29,7 @@ private:
     bool executeQuery(const std::string& query);
     std::string escapeString(const std::string& value);
     
-    MYSQL* conn_;
+    sqlite3* db_;
     std::mutex mutex_;
     bool initialized_;
 };
